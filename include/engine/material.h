@@ -1,6 +1,7 @@
 #pragma once
 
 #include "corebase/texture.h"
+#include "platform/common.h"
 
 // Material flags
 #define MATERIAL_USE_TEXTURE  1
@@ -15,6 +16,11 @@
 
 typedef struct material_t
 {
-  texture_t* texture;
+  float col[4]; 
+  lbyte flags;
+
+  texture_t* base;
+  texture_t* normal;
+
 
 } material_t;

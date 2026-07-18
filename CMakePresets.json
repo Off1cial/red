@@ -13,7 +13,17 @@
         "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES": "C:/msys64/ucrt64/include/SDL3"
       }
     },
-
+    {
+      "name": "linux-gcc-debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
     {
       "name": "clang-debug",
       "generator": "Ninja",

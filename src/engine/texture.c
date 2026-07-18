@@ -1,7 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "platform/stb_image.h"
 #include "platform/common.h"
-#include "corebase/texture.h"
+#include "engine/texture.h"
 
 #include <assert.h>
 

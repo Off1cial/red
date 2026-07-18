@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <time.h>
+#include <math.h>
 
 #include "platform/window.h"
 #include "platform/input.h"
+#include "platform/common.h"
 
-#include "corebase/shader.h"
-#include "corebase/mesh.h"
+#include "engine/shader.h"
+#include "engine/mesh.h"
 #include "engine/camera.h"
 
 // test triangle
@@ -45,7 +48,6 @@ int main()
   glViewport(0,0, win->winw, win->winh);
 
 
-
   int quit = 0;
   while(!quit)
   {
@@ -62,8 +64,7 @@ int main()
           input->eventWindowNewHeight
       );
     }
-     
-
+    
     Camera_Look(camera, input->mxrel, input->myrel, 0.2f);
 
     if (input->pressed[SDL_SCANCODE_S])

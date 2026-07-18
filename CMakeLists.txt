@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(red VERSION 1.0 LANGUAGES C CXX)
+
 add_compile_definitions(_POSIX_C_SOURCE=200112L)
 
 find_package(PkgConfig REQUIRED)
@@ -12,20 +13,43 @@ pkg_check_modules(SDL3TTF REQUIRED sdl3-ttf)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # -------------------------
-# Source files
+# Shared source files
 # -------------------------
-file(GLOB_RECURSE SOURCE_FILES
-    src/*.c
-    src/*.cpp
-    src/types/*.c
-    src/types/*.cpp
-    src/rendering/*.c
-    src/rendering/*.cpp
+
+file(GLOB_RECURSE SOURCE_SHARED
+    src/corebase/*.c
+    src/corebase/*.cpp
+)
+
+# -------------------------
+# Client sources
+# -------------------------
+
+file(GLOB_RECURSE SOURCE_CLIENT
+    src/client/*.c
+    src/client/*.cpp
+    src/engine/*.c
+    src/engine/*.cpp
+)
+
+file(GLOB_RECURSE SOURCE_CLIENT_PLATFORM
+    src/platform/*.c
+    src/platform/*.cpp
+)
+
+# -------------------------
+# Server sources
+# -------------------------
+
+file(GLOB_RECURSE SOURCE_SERVER
+    src/server/*.c
+    src/server/*.cpp
 )
 
 # -------------------------
 # ImGui sources
 # -------------------------
+
 set(IMGUI_SRC
     ${CMAKE_SOURCE_DIR}/include/imgui/imgui.cpp
     ${CMAKE_SOURCE_DIR}/include/imgui/imgui_draw.cpp
@@ -36,66 +60,97 @@ set(IMGUI_SRC
 )
 
 # -------------------------
-# Executable
+# Client executable
 # -------------------------
-add_executable(red
+
+add_executable(client
     ${IMGUI_SRC}
-    ${SOURCE_FILES}
-    ${EXTRA_SOURCES}
+    ${SOURCE_SHARED}
+    ${SOURCE_CLIENT_PLATFORM}
+    ${SOURCE_CLIENT}
+)
+
+target_compile_definitions(client PRIVATE
+    CLIENT_BUILD
 )
 
 # -------------------------
-# Include directories
+# Server executable
 # -------------------------
-target_include_directories(red PRIVATE
-    ${SDL3_INCLUDE_DIRS}
-    ${SDL3IMAGE_INCLUDE_DIRS}
-    ${SDL3TTF_INCLUDE_DIRS}
 
+add_executable(server
+    ${SOURCE_SHARED}
+    ${SOURCE_SERVER}
+)
+
+target_compile_definitions(server PRIVATE
+    SERVER_BUILD
+)
+
+# -------------------------
+# Common include paths
+# -------------------------
+
+target_include_directories(client PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_include_directories(server PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
 # -------------------------
-# Link directories
+# Client libraries
 # -------------------------
-target_link_directories(red PRIVATE
+
+target_include_directories(client PRIVATE
+    ${SDL3_INCLUDE_DIRS}
+    ${SDL3IMAGE_INCLUDE_DIRS}
+    ${SDL3TTF_INCLUDE_DIRS}
+)
+
+target_link_directories(client PRIVATE
     ${SDL3_LIBRARY_DIRS}
     ${SDL3IMAGE_LIBRARY_DIRS}
     ${SDL3TTF_LIBRARY_DIRS}
 )
 
-# -------------------------
-# SDL libraries
-# -------------------------
-target_link_libraries(red PRIVATE
+target_link_libraries(client PRIVATE
     ${SDL3_LIBRARIES}
     ${SDL3IMAGE_LIBRARIES}
     ${SDL3TTF_LIBRARIES}
 )
 
-# -------------------------
-# Platform-specific libs
-# -------------------------
-if (WIN32)
+if(WIN32)
 
-    target_link_libraries(red PRIVATE
+    target_link_libraries(client PRIVATE
         opengl32
     )
 
 elseif(UNIX)
 
-    target_link_libraries(red PRIVATE
-        m
+    target_link_libraries(client PRIVATE
         GL
+        m
         stdc++
     )
 
 endif()
 
 # -------------------------
-# C/C++ settings
+# Server libraries
 # -------------------------
-set_target_properties(red PROPERTIES
+
+target_link_libraries(server PRIVATE
+    m
+    stdc++
+)
+
+# -------------------------
+# Compiler settings
+# -------------------------
+
+set_target_properties(client server PROPERTIES
     LINKER_LANGUAGE CXX
     C_STANDARD 11
     C_STANDARD_REQUIRED YES
@@ -103,29 +158,31 @@ set_target_properties(red PROPERTIES
 )
 
 # -------------------------
-# AddressSanitizer
+# Address sanitizer
 # -------------------------
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-    if (NOT WIN32)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT WIN32)
 
-        target_compile_options(red PRIVATE
+    foreach(target client server)
+
+        target_compile_options(${target} PRIVATE
             -fsanitize=address
             -fno-omit-frame-pointer
             -g
         )
 
-        target_link_options(red PRIVATE
+        target_link_options(${target} PRIVATE
             -fsanitize=address
         )
 
-    endif()
+    endforeach()
 
 endif()
 
 # -------------------------
-# Debug messages
+# Debug output
 # -------------------------
+
 message(STATUS "SDL3 Include Dir: ${SDL3_INCLUDE_DIRS}")
 message(STATUS "SDL3 Libraries: ${SDL3_LIBRARIES}")
 
