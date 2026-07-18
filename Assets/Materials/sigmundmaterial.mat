@@ -1,0 +1,10 @@
+Material "SigmundMaterial"
+{
+  Lit=false
+  Texture="../Assets/Textures/sigmund.jpg"
+  UseVertexColour=false;
+  Colour=255 255 255 255
+  Specular=300
+  Shininess=100
+  Transparent=false
+}

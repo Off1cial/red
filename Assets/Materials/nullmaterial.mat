@@ -1,0 +1,11 @@
+Material "NullMaterial"
+{
+  Lit=false
+  Texture="../Assets/Textures/null.png"
+  UseVertexColour=false
+  DoubleSided=false
+  Colour=255 255 255 255
+  Specular=0
+  Shininess=0
+  Transparent=false
+}
