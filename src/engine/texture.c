@@ -85,7 +85,7 @@ void CBaseAsset_TextureLoad(const char* filepath, texture_t* destination)
   destination->target = GL_TEXTURE_2D;
   destination->w = w;
   destination->h = h;
-  destination->id = id;
+  destination->gltexnum = id;
   destination->format = format;
 }
 

@@ -21,6 +21,7 @@
 
 #define CLAMP(v, lb, ub)  ( MAX(lb, MIN(v, ub)) )
 
+#define STRING_MAX_LENGTH 256
 
 typedef unsigned char byte;
 typedef unsigned short int lbyte;

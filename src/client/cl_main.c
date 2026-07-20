@@ -1,14 +1,20 @@
 #include <stdio.h>
-#include <time.h>
-#include <math.h>
+#include <stdlib.h>
 
 #include "platform/window.h"
 #include "platform/input.h"
-#include "platform/common.h"
 
 #include "engine/shader.h"
 #include "engine/mesh.h"
 #include "engine/camera.h"
+
+#include "client/client.h"
+
+// cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+// ninja -C build
+ 
+// https://www.reddit.com/r/playboicarti/s/lpdLQ9IYHt
+
 
 // test triangle
 
@@ -27,12 +33,15 @@ const gpuVertex v2 = {
   .col = {0.0, 0.0, 1.0}
 };
 
+client_t* client;
 
 int main()
 {
+
+  client = malloc(sizeof(client_t));
   printf("Hello world\n");
 
-  pltWindow* win = PlatformWindow_Create(1280, 720, "RED");
+  pltWindow* win = PlatformWindow_Create(640,480, "RED");
   pltInput* input = PlatformInput_Create();
 
   
@@ -47,11 +56,12 @@ int main()
 
   glViewport(0,0, win->winw, win->winh);
 
+  CL_Connect(client, "127.0.1.1", SERVER_PORT, NET_PROTOCOL_TCP);
 
   int quit = 0;
   while(!quit)
   {
-    glClearColor(0.12f, 0.1f, 0.1f, 1.0f); 
+    glClearColor(0.12f, 0.7f, 0.7f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
     PlatformInput_Poll(input, &quit); 

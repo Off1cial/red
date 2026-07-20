@@ -44,6 +44,9 @@ file(GLOB_RECURSE SOURCE_CLIENT_PLATFORM
 file(GLOB_RECURSE SOURCE_SERVER
     src/server/*.c
     src/server/*.cpp
+    src/platform/network/*.c
+    src/platform/network/*.cpp
+    
 )
 
 # -------------------------
@@ -141,7 +144,16 @@ endif()
 # Server libraries
 # -------------------------
 
+target_include_directories(server PRIVATE
+    ${SDL3_INCLUDE_DIRS}
+)
+
+target_link_directories(server PRIVATE
+    ${SDL3_LIBRARY_DIRS}
+)
+
 target_link_libraries(server PRIVATE
+    ${SDL3_LIBRARIES}
     m
     stdc++
 )

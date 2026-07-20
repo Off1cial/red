@@ -1,6 +1,6 @@
 #pragma once
 
-#include "corebase/texture.h"
+#include "engine/texture.h"
 #include "platform/common.h"
 
 // Material flags
@@ -23,4 +23,10 @@ typedef struct material_t
   texture_t* normal;
 
 
-} material_t;
+  // Animation info
+  struct texture_s *anim_next; // next texture in sequence
+  int anim_count; // 0 if no anim
+
+
+} material_t
+
