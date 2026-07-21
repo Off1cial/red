@@ -4,7 +4,8 @@
 // Asset manager
 //
 
-#include "corebase/texture.h"
+#include "engine/material.h"
+#include "corebase/shader.h"
 
 typedef enum {
   ASSET_TEXTURE = 0,
@@ -18,16 +19,15 @@ typedef struct CBASE_ASSET_T
 {
   byte type; 
   string fpath;
+  
 
 } CBaseAsset;
 
 
-// Texture.c
 
 void CBaseAsset_TextureLoad(const char* filepath, texture_t* destination);
 void CBaseAssset_TextureDestroy(texture_t* texture);
 
-// Material.c
 
 
 

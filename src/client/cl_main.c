@@ -1,11 +1,22 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "platform/window.h"
 #include "platform/input.h"
+#include "corebase/time.h"
 
-#include "corebase/shader.h"
-#include "corebase/mesh.h"
+#include "engine/shader.h"
+#include "engine/mesh.h"
 #include "engine/camera.h"
+
+#include "client/client.h"
+#include "shared/network/packet.h"
+
+// cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+// ninja -C build
+ 
+// https://www.reddit.com/r/playboicarti/s/lpdLQ9IYHt
+
 
 // test triangle
 
@@ -24,12 +35,18 @@ const gpuVertex v2 = {
   .col = {0.0, 0.0, 1.0}
 };
 
+client_t* client;
 
 int main()
 {
+
+  client = malloc(sizeof(client_t));
+  CL_Init(client, "redw0od0");
+  char msg_disconnect[] = "Chode";
+  size_t msg_disconnect_len = strlen(msg_disconnect);
   printf("Hello world\n");
 
-  pltWindow* win = PlatformWindow_Create(1280, 720, "RED");
+  pltWindow* win = PlatformWindow_Create(640,480, "RED");
   pltInput* input = PlatformInput_Create();
 
   
@@ -46,10 +63,66 @@ int main()
 
 
 
+  CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
+  
+  
+  //netpacket_t connectpacket = {0};
+  //connectpacket.type = NET_PACKET_CONNECT;
+
+  //CL_SendPacketUDP(client, &connectpacket);
+
+
+  netpacket_t testpacket = {0};
+  testpacket.type = 99;
+  testpacket.sequence = 0;
+  char* str = "Hello!";
+  int len = strlen(str);
+  testpacket.size = len;
+  strcpy(testpacket.data, str);
+
+
+  pltTime_Init();
+  double timestamp = pltTime_Time();
   int quit = 0;
+  int con_attempts = 0;
   while(!quit)
   {
-    glClearColor(0.12f, 0.1f, 0.1f, 1.0f); 
+
+    double time = pltTime_Time();
+    double dt = time - timestamp;
+
+    if (client->socket_udp != -1)
+      CL_ReceivePacketUDP(client);
+
+    if (dt >= 3.0f)
+    {
+      if (client->state != CSTATE_CONNECTED)
+      {
+        /*
+        printf("[CLIENT]: Connection attempt %d\n", con_attempts);
+        con_attempts++;
+        if (client->socket_udp == -1)
+          CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
+        else
+        CL_SendConnectPacket(client);
+        */
+        CL_GameServerJoin(
+            client, 
+            "127.0.0.1", 
+            SERVER_PORT, 
+            NET_PROTOCOL_UDP, 
+            4);
+      }
+
+      if (client->state == CSTATE_CONNECTED)
+      {
+        CL_SendPacketUDP(client, &testpacket);
+        printf("Packet sent\n");
+      }
+      timestamp = time;
+    }
+
+    glClearColor(0.12f, 0.7f, 0.7f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
     PlatformInput_Poll(input, &quit); 
@@ -62,8 +135,7 @@ int main()
           input->eventWindowNewHeight
       );
     }
-     
-
+    
     Camera_Look(camera, input->mxrel, input->myrel, 0.2f);
 
     if (input->pressed[SDL_SCANCODE_S])
@@ -72,6 +144,10 @@ int main()
       camera->origin = VectorSub(camera->origin, camera->front);
     }
 
+    if (input->pressed[SDL_SCANCODE_P] && (client->socket_udp >= 0))
+    {
+      CL_GameServerDisconnect(client, msg_disconnect, msg_disconnect_len );
+    }
 
     Camera_Update(camera);
     CBaseShader_Use(shader);

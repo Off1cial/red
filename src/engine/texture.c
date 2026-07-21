@@ -1,7 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "platform/stb_image.h"
 #include "platform/common.h"
-#include "corebase/texture.h"
+#include "engine/texture.h"
 
 #include <assert.h>
 
@@ -85,7 +85,7 @@ void CBaseAsset_TextureLoad(const char* filepath, texture_t* destination)
   destination->target = GL_TEXTURE_2D;
   destination->w = w;
   destination->h = h;
-  destination->id = id;
+  destination->gltexnum = id;
   destination->format = format;
 }
 

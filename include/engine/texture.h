@@ -3,11 +3,13 @@
 
 #include <glad/glad.h>
 
-typedef struct texture_t
+typedef struct texture_s
 {
-  GLuint id;
+  GLuint gltexnum;
   GLenum format, target;
   int w, h;
+
+
 } texture_t;
 
 

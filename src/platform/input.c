@@ -51,6 +51,13 @@ void PlatformInput_Poll(pltInput* input, int* quit)
   const bool* keys = SDL_GetKeyboardState(NULL);
   SDL_MouseButtonFlags m_abs = SDL_GetMouseState(&input->mx, &input->my);
   SDL_MouseButtonFlags m_rel = SDL_GetRelativeMouseState(&input->mxrel, &input->myrel);
+  
+  memcpy(input->mPrevious, input->kCurrent, sizeof(input->kCurrent));
+  input->mCurrent[0] = (m_abs & SDL_BUTTON_LMASK) != 0;
+  input->mCurrent[1] = (m_abs & SDL_BUTTON_RMASK) != 0;
+  input->mCurrent[2] = (m_abs & SDL_BUTTON_MMASK) != 0;
+  input->mCurrent[3] = (m_abs & SDL_BUTTON_X1MASK) != 0;
+  input->mCurrent[4] = (m_abs & SDL_BUTTON_X2MASK) != 0;
 
   memcpy(input->kPrevious, input->kCurrent, sizeof(input->kCurrent));
   memcpy(input->kCurrent, keys, SDL_SCANCODE_COUNT);
