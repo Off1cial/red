@@ -12,6 +12,7 @@ static void setclients(server_t* server)
   {
     svclient_t* c = &server->clients[i];
     memset(&c->addr_udp, 0, sizeof(struct sockaddr_in));
+    c->state = SVCLIENT_STATE_CLOSED;
     c->socket_tcp = -1;
   }
 }

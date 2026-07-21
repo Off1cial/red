@@ -2,14 +2,23 @@
 
 
 #include "platform/network/network.h"
-#include "shared/network/client.h"
+
+typedef enum svclientstate_t
+{
+  SVCLIENT_STATE_CLOSED,
+  SVCLIENT_STATE_CONNECTED,
+  SVCLIENT_STATE_SPAWNED,
+  SVCLIENT_STATE_ZOMBIE, // Connected but not responding, allows reconnection
+
+
+} svclientstate_t;
 
 typedef struct svclient_t
 {
   struct sockaddr_in addr_udp;
   netsocket_t socket_tcp;
   
-  clientstate_t state;
+  svclientstate_t state;
 
   double time_connected;
   double time_lastrecv;

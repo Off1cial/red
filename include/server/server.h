@@ -4,11 +4,13 @@
 #include <sys/socket.h>
 #include "platform/common.h"
 #include "platform/network/network.h"
+#include "shared/network/packet.h"
 
 #include "server/sv_client.h"
 
 
 #define SERVER_MAX_CLIENTS 32
+#define SERVER_TICKRATE 64
 
 
 #define SERVER_FAILURE 0
@@ -49,5 +51,15 @@ int SV_Init(
     netdomain_t domain
     );
 
+void SV_Close(server_t* server);
+
 int SV_ClientAcceptTCP(server_t* server);
-int SV_ClientDrop(server_t* server, int client);
+int SV_ClientConnectUDP(server_t* server, struct sockaddr_in* addr, netpacket_t* packet);
+
+int SV_ClientDrop(server_t* server, int client, const char* msg);
+
+int SV_SendPacketToClientUDP(server_t* server, int client, netpacket_t* packet);
+
+int SV_ReceivePacketUDP(server_t* server);
+
+svclient_t* SV_FindClientUDP(server_t* server, struct sockaddr_in* addr); 

@@ -3,12 +3,14 @@
 
 #include "platform/window.h"
 #include "platform/input.h"
+#include "corebase/time.h"
 
 #include "engine/shader.h"
 #include "engine/mesh.h"
 #include "engine/camera.h"
 
 #include "client/client.h"
+#include "shared/network/packet.h"
 
 // cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 // ninja -C build
@@ -39,6 +41,7 @@ int main()
 {
 
   client = malloc(sizeof(client_t));
+  CL_Init(client, "redw0od0");
   printf("Hello world\n");
 
   pltWindow* win = PlatformWindow_Create(640,480, "RED");
@@ -56,11 +59,56 @@ int main()
 
   glViewport(0,0, win->winw, win->winh);
 
-  CL_Connect(client, "127.0.1.1", SERVER_PORT, NET_PROTOCOL_TCP);
 
+
+  CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
+  
+  
+  //netpacket_t connectpacket = {0};
+  //connectpacket.type = NET_PACKET_CONNECT;
+
+  //CL_SendPacketUDP(client, &connectpacket);
+
+
+  netpacket_t testpacket = {0};
+  testpacket.type = 99;
+  testpacket.sequence = 0;
+  char* str = "Hello!";
+  int len = strlen(str);
+  testpacket.size = len;
+  strcpy(testpacket.data, str);
+
+
+  pltTime_Init();
+  double timestamp = pltTime_Time();
   int quit = 0;
   while(!quit)
   {
+
+    double time = pltTime_Time();
+    double dt = time - timestamp;
+    if (client->socket_udp != -1)
+      CL_ReceivePacketUDP(client);
+
+    if (dt >= 3.0f)
+    {
+      if (client->state != CSTATE_CONNECTED)
+      {
+        printf("Attempting connection...\n");
+        if (client->socket_udp == -1)
+          CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
+        else
+        CL_SendConnectPacket(client);
+      }
+
+      if (client->state == CSTATE_CONNECTED)
+      {
+        CL_SendPacketUDP(client, &testpacket);
+        printf("Packet sent\n");
+      }
+      timestamp = time;
+    }
+
     glClearColor(0.12f, 0.7f, 0.7f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 

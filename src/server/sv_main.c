@@ -3,11 +3,26 @@
 #include "server/server.h"
 #include "corebase/time.h"
 
+
+void SV_Close(server_t* server)
+{
+  server->state = SERVER_STATE_STOPPING;
+  for (int i = 0; i < server->clientcount; i++)
+  {
+    SV_ClientDrop(server, i, "Server is shutting down...");
+  }
+  
+  free(server);
+}
+
+
+
 server_t* server = NULL;
 
 int main()
 {
   server = malloc(sizeof(server_t));
+  pltTime_Init();
   
   int serverresult = SV_Init
     (
@@ -32,7 +47,7 @@ int main()
   
   strcpy(hostip, inet_ntoa(*(struct in_addr*)host->h_addr_list[0]));
 
-  printf("[SERVER]: Server started on %s:%d\n", hostip, ntohs(server->addr_udp.sin_port));
+  printf("[SERVER]: %dHz Server started on %s:%d\n", SERVER_TICKRATE, hostip, ntohs(server->addr_udp.sin_port));
 
 
   double current_time = pltTime_Time(); 
@@ -41,12 +56,26 @@ int main()
   {
     double time = pltTime_Time();
     float dt = (time - current_time);
-    current_time = time;
-    
-  
 
-    SV_ClientAcceptTCP(server);
+    if (dt >= 1.0f / SERVER_TICKRATE)
+    {
+      current_time = time;
+      //SV_ClientAcceptTCP(server);
+      SV_ReceivePacketUDP(server);
+      for (int i = 0; i < server->clientcount; i++)
+      {
+        if (server->clients[i].state != SVCLIENT_STATE_CONNECTED)
+          continue;
+        server->clients[i].time_elapsed+=dt;
+        if (server->clients[i].time_elapsed >= 8.0f)
+        {
+          SV_ClientDrop(server, i, "Kicked by server!");
+        }
+      }
+    }
   }
+
+  SV_Close(server);
 
   return 0;
 }

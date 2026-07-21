@@ -19,6 +19,10 @@
 #define NET_SOCK_UDP SOCK_DGRAM
 #define NET_SOCK_TCP SOCK_STREAM
 
+#ifndef SERVER_PORT
+#define SERVER_PORT 27015
+#endif
+
 typedef int netsocket_t;
 
 typedef struct netaddr_t

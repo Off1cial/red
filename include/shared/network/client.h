@@ -17,6 +17,7 @@ typedef enum clientmsg_t
 typedef enum clientstate_t
 {
   CSTATE_EMPTY,
+  CSTATE_CONNECTING,
   CSTATE_CONNECTED,
 
 } clientstate_t;

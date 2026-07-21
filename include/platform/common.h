@@ -23,7 +23,7 @@
 
 #define STRING_MAX_LENGTH 256
 
-typedef unsigned char byte;
+typedef char byte;
 typedef unsigned short int lbyte;
 
 typedef char* string;
