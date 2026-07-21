@@ -8,6 +8,7 @@
 // Common stuff innit
 
 
+#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
 #define MAX(a,b) \
 ({ __typeof__ (a) _a = (a); \

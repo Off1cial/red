@@ -18,12 +18,21 @@ typedef struct client_s
   clientstate_t state;
   uint8_t serverslot;
 
+  int connect_attempts;
+  int connect_maxattempts;
+
+  double time_lastconnectattempt;
+
   char name[CLIENT_NAME_LENGTH];
 
 } client_t;
 
 
 int CL_Init(client_t* client, const char* name);
+
+
+void CL_Loop(client_t* client, double dt);
+
 
 int CL_Connect(
     client_t* client, 

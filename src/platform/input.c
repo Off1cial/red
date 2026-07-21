@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+pltInput* gPltInput = NULL;
 
 pltInput* PlatformInput_Create()
 {
@@ -52,7 +53,7 @@ void PlatformInput_Poll(pltInput* input, int* quit)
   SDL_MouseButtonFlags m_abs = SDL_GetMouseState(&input->mx, &input->my);
   SDL_MouseButtonFlags m_rel = SDL_GetRelativeMouseState(&input->mxrel, &input->myrel);
   
-  memcpy(input->mPrevious, input->kCurrent, sizeof(input->kCurrent));
+  memcpy(input->mPrevious, input->mCurrent, sizeof(input->mCurrent));
   input->mCurrent[0] = (m_abs & SDL_BUTTON_LMASK) != 0;
   input->mCurrent[1] = (m_abs & SDL_BUTTON_RMASK) != 0;
   input->mCurrent[2] = (m_abs & SDL_BUTTON_MMASK) != 0;
@@ -67,6 +68,8 @@ void PlatformInput_Poll(pltInput* input, int* quit)
     input->pressed[i]  = input->kCurrent[i] && !input->kPrevious[i];
     input->released[i] = !input->kCurrent[i] && input->kPrevious[i]; 
   }
+
+
 
 }
 

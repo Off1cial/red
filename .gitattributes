@@ -1,2 +1,3 @@
-include/imgui/** linguist-vendored
-build/** linguist-vendored
+include/imgui/** linguist-vendored=true
+build/** linguist-vendored=true
+*.h linguist-language=C

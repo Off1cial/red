@@ -1,5 +1,6 @@
 #include "engine/ui.h"
 #include "engine/ui_draw.h"
+#include <stdio.h>
 
 #define SEED_PLACEHOLDER 0
 
@@ -23,7 +24,7 @@ static uint8_t ui_rectcontained(rectdef rect, float x, float y)
 uint8_t UI_Button(const char* name, rectdef rect)
 {
   uint32_t id = ui_hash_id(name, SEED_PLACEHOLDER);
-  uint8_t hovered = ui_rectcontained(rect, gUIctx->mouse_x, gUIctx->mouse_y);
+  uint8_t hovered = ui_rectcontained(rect, gPltInput->mx, gPltInput->my);
   int clicked = 0;
   if (hovered)
     gUIctx->hot_id = id;
@@ -32,8 +33,9 @@ uint8_t UI_Button(const char* name, rectdef rect)
   // Input and other shit
   if (gUIctx->hot_id == id)
   {
-    if (gUIctx->mpress == UI_InputM1)
+    if (pltInput_MouseClick(0))
     {
+      clicked = 1;
       gUIctx->active_id = id;
     }
   }
@@ -52,6 +54,8 @@ uint8_t UI_Button(const char* name, rectdef rect)
   {
     RGBAfromRGB(colour, gUIctx->style.button_idle, 255);  
   }
+  //printf("Colour determined\n\t(%0.2f, %0.2f, %0.2f, %0.2f)\n",
+    //  colour[0], colour[1], colour[2], colour[3]);
   UI_DrawRect(rect, colour);
 
   return clicked;

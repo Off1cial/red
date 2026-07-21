@@ -12,6 +12,9 @@ typedef struct PLT_WINDOW
   int winw, winh;
 } pltWindow;
 
+
+extern pltWindow* gPltWindow;
+
 pltWindow*  PlatformWindow_Create(int width, int height, const char* title);
 void        PlatformWindow_Destroy(pltWindow* win);
 

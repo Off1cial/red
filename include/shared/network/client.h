@@ -19,6 +19,7 @@ typedef enum clientstate_t
   CSTATE_EMPTY,
   CSTATE_CONNECTING,
   CSTATE_CONNECTED,
+  CSTATE_DISCONNECTED,
 
 } clientstate_t;
 

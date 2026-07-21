@@ -196,6 +196,7 @@ int CL_GameServerJoin(
     int retries
 )
 {
+  /*
   double time_attemptdelay = 2.0f;
   double time_attemptlast; 
   int attempts_made = 0;
@@ -231,6 +232,20 @@ connected:
   printf("[CLIENT]: Successfully joined game server!");
   return CLIENT_SUCCESS;
 
+  */
+
+  client->state = CSTATE_CONNECTING;
+
+  client->connect_attempts = 0;
+  client->connect_maxattempts = retries;
+  
+  client->time_lastconnectattempt = pltTime_Time();
+
+  if (client->socket_udp == -1)
+    CL_Connect(client, ip, port, protocol);
+  CL_SendConnectPacket(client);
+
+  return CLIENT_SUCCESS;
 }
 
 int CL_GameServerDisconnect(client_t* client, char* msg, size_t msglen)
