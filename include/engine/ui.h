@@ -52,11 +52,6 @@ typedef struct uistyle_t
 
 typedef struct uicontext_t
 {
-  // Obtain from SDL each frame
-  uint32_t mouse_x, mouse_y;
-  char textinput[64]; // If the user can somehow enter 64 characters at once, kill them
-  uint32_t keypress;  // SDL_Scancode
-  uint8_t mpress; // -1 if none
 
 
 

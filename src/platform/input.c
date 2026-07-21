@@ -70,7 +70,6 @@ void PlatformInput_Poll(pltInput* input, int* quit)
   }
 
 
-  // Pass state to UI
 
 }
 

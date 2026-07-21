@@ -42,45 +42,37 @@ client_t* client;
 void CL_Loop(client_t* client, double dt)
 {
   if (client->socket_udp != -1)
-  CL_ReceivePacketUDP(client);
+    CL_ReceivePacketUDP(client);
 
-  if (dt >= 3.0f && client)
+  if (client->state == CSTATE_CONNECTING)
   {
-    if (client->state != CSTATE_CONNECTED)
+    double now = pltTime_Time();
+    if (now - client->time_lastconnectattempt > 2.0f)
     {
-      /*
-      printf("[CLIENT]: Connection attempt %d\n", con_attempts);
-      con_attempts++;
-      if (client->socket_udp == -1)
-        CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
-      else
-      CL_SendConnectPacket(client);
-      */
-      CL_GameServerJoin(
-          client, 
-          "127.0.0.1", 
-          SERVER_PORT, 
-          NET_PROTOCOL_UDP, 
-          4);
-    }
-
-      /*
-      if (client->state == CSTATE_CONNECTED)
+      if (client->connect_attempts >= client->connect_maxattempts)
       {
-        CL_SendPacketUDP(client, &testpacket);
-        printf("Packet sent\n");
+        printf("[CLIENT]: Connection failed after %d retries\n",
+            client->connect_attempts);
+        client->connect_attempts = 0;
+        client->state = CSTATE_DISCONNECTED;
+        return;
       }
-      timestamp = time;
-      */
-  } 
+      // Retry connection
+
+      printf("[CLIENT]: Retrying connection...\n");
+      
+      client->connect_attempts++;
+      client->time_lastconnectattempt = now;
+      CL_SendConnectPacket(client);
+    }
+  }
+
 }
 
 
 int main()
 {
 
-  client = malloc(sizeof(client_t));
-  CL_Init(client, "redw0od0");
   char msg_disconnect[] = "Chode";
   size_t msg_disconnect_len = strlen(msg_disconnect);
   printf("Hello world\n");
@@ -89,6 +81,9 @@ int main()
   gPltWindow = win; // clean this up later
   pltInput* input = PlatformInput_Create();
   gPltInput = input;
+
+
+  pltTime_Init();
 
   UI_Init();
   
@@ -104,8 +99,10 @@ int main()
   glViewport(0,0, win->winw, win->winh);
 
 
+  client = malloc(sizeof(client_t));
+  CL_Init(client, "redw0od0");
 
-  CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
+  //CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
   
   
   //netpacket_t connectpacket = {0};
@@ -123,7 +120,6 @@ int main()
   strcpy(testpacket.data, str);
 
 
-  pltTime_Init();
   double timestamp = pltTime_Time();
   int quit = 0;
   int con_attempts = 0;
@@ -133,8 +129,9 @@ int main()
     double time = pltTime_Time();
     double dt = time - timestamp;
 
+
     // Run on other thread?
-    //CL_Loop(client, dt);
+    CL_Loop(client, dt);
 
 
     timestamp = time;
@@ -155,7 +152,12 @@ int main()
     }
     
     rectdef rect = {40,40,200,100};
-    UI_Button("Button", rect);
+    if (UI_Button("Button", rect))
+    {
+      printf("Clicked\n");
+      if (client->state != CSTATE_CONNECTED)
+        CL_GameServerJoin(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP, 2);
+    }
 
     Camera_Look(camera, input->mxrel, input->myrel, 0.2f);
 

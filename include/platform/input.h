@@ -38,3 +38,11 @@ void        PlatformInput_Destroy(pltInput* input);
 void        PlatformInput_Poll(pltInput* input, int* quit);
 
 
+#define pltInput_MouseClick(button) \
+  gPltInput->mCurrent[button] && !gPltInput->mPrevious[button]
+
+#define pltInput_MouseRelease(button) \
+  !gPltInput->mCurrent[button] && gPltInput->mPrevious[button]
+
+#define pltInput_MouseDown(button) \
+  gPltInput->mCurrent[button]

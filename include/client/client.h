@@ -18,6 +18,11 @@ typedef struct client_s
   clientstate_t state;
   uint8_t serverslot;
 
+  int connect_attempts;
+  int connect_maxattempts;
+
+  double time_lastconnectattempt;
+
   char name[CLIENT_NAME_LENGTH];
 
 } client_t;

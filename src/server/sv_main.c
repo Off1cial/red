@@ -59,7 +59,7 @@ int main()
     float dt = (time - current_time);
     server->seconds+=dt;
 
-    if (server->seconds >= 10.0f)
+    if (server->seconds >= 30.0f)
     {
       goto shutdown;
       break;

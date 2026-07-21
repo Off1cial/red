@@ -60,8 +60,5 @@ void UI_FrameBegin()
   gUIctx->vertexcount = 0;
   gUIctx->indexcount = 0;
 
-  // Take input from SDL
-  gUIctx->mouse_x = gPltInput->mx;
-  gUIctx->mouse_y = gPltInput->my;
 
 }
