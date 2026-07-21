@@ -8,6 +8,7 @@
 #include "engine/shader.h"
 #include "engine/mesh.h"
 #include "engine/camera.h"
+#include "engine/ui.h"
 
 #include "client/client.h"
 #include "shared/network/packet.h"
@@ -37,6 +38,44 @@ const gpuVertex v2 = {
 
 client_t* client;
 
+
+void CL_Loop(client_t* client, double dt)
+{
+  if (client->socket_udp != -1)
+  CL_ReceivePacketUDP(client);
+
+  if (dt >= 3.0f && client)
+  {
+    if (client->state != CSTATE_CONNECTED)
+    {
+      /*
+      printf("[CLIENT]: Connection attempt %d\n", con_attempts);
+      con_attempts++;
+      if (client->socket_udp == -1)
+        CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
+      else
+      CL_SendConnectPacket(client);
+      */
+      CL_GameServerJoin(
+          client, 
+          "127.0.0.1", 
+          SERVER_PORT, 
+          NET_PROTOCOL_UDP, 
+          4);
+    }
+
+      /*
+      if (client->state == CSTATE_CONNECTED)
+      {
+        CL_SendPacketUDP(client, &testpacket);
+        printf("Packet sent\n");
+      }
+      timestamp = time;
+      */
+  } 
+}
+
+
 int main()
 {
 
@@ -47,8 +86,11 @@ int main()
   printf("Hello world\n");
 
   pltWindow* win = PlatformWindow_Create(640,480, "RED");
+  gPltWindow = win; // clean this up later
   pltInput* input = PlatformInput_Create();
+  gPltInput = input;
 
+  UI_Init();
   
   CBaseShader* shadertest = CBaseShader_Create("../Assets/Shaders/vert_test.vs", "../Assets/Shaders/frag_test.fs");
   CBaseShader* shader     = CBaseShader_Create("../Assets/Shaders/vert_unlit.vs", "../Assets/Shaders/frag_unlit.fs");
@@ -91,41 +133,17 @@ int main()
     double time = pltTime_Time();
     double dt = time - timestamp;
 
-    if (client->socket_udp != -1)
-      CL_ReceivePacketUDP(client);
+    // Run on other thread?
+    //CL_Loop(client, dt);
 
-    if (dt >= 3.0f)
-    {
-      if (client->state != CSTATE_CONNECTED)
-      {
-        /*
-        printf("[CLIENT]: Connection attempt %d\n", con_attempts);
-        con_attempts++;
-        if (client->socket_udp == -1)
-          CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
-        else
-        CL_SendConnectPacket(client);
-        */
-        CL_GameServerJoin(
-            client, 
-            "127.0.0.1", 
-            SERVER_PORT, 
-            NET_PROTOCOL_UDP, 
-            4);
-      }
 
-      if (client->state == CSTATE_CONNECTED)
-      {
-        CL_SendPacketUDP(client, &testpacket);
-        printf("Packet sent\n");
-      }
-      timestamp = time;
-    }
+    timestamp = time;
 
-    glClearColor(0.12f, 0.7f, 0.7f, 1.0f); 
+    glClearColor(0.12f, 0.1f, 0.1f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-
+      
     PlatformInput_Poll(input, &quit); 
+    UI_FrameBegin();
     // Check for window resize
     if (input->eventWindowResized)
     {
@@ -136,6 +154,9 @@ int main()
       );
     }
     
+    rectdef rect = {40,40,200,100};
+    UI_Button("Button", rect);
+
     Camera_Look(camera, input->mxrel, input->myrel, 0.2f);
 
     if (input->pressed[SDL_SCANCODE_S])
@@ -156,8 +177,13 @@ int main()
     CBaseShader_SetMat4(shader, SH_UNIFORM_MODEL, Mat4Identity());
 
     CBaseMesh_Draw(mTriangle, GL_TRIANGLES);
+    UI_DrawBatch();
+
+    while (glGetError() != GL_NO_ERROR)
+      printf("GL error\n");
 
     SDL_GL_SwapWindow(win->window);
+
   }
 
   CBaseShader_Destroy(shadertest);

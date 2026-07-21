@@ -58,4 +58,10 @@ void Camera_Look(camera_t* camera, float m_dx, float m_dy, float sens)
 {
   camera->angles.x -= m_dy * sens;
   camera->angles.y += m_dx * sens;
+  
+  if (camera->angles.x > 89.0f)
+    camera->angles.x = 89.0f;
+  if (camera->angles.x < - 89.0f)
+    camera->angles.y = -89.0f;
+
 }

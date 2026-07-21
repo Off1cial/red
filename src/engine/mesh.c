@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
-
+#include "platform/common.h"
 
 static CBaseMesh* CBaseMesh_Alloc(int vertexcap, int indexcap)
 {

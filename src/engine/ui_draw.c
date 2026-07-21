@@ -1,7 +1,27 @@
 #include "engine/ui_draw.h"
 #include <stdlib.h>
+#include "platform/common.h"
+#include "platform/window.h"
+#include "engine/shader.h"
 
 #define UI32_INVALID ((uint32_t)-1) // 0xFFFFFFFF
+
+
+static void uidebug_printvert(float pos[2])
+{
+  printf("UIvert (%0.2f, %0.2f)\n", pos[0], pos[1]);
+}
+
+static void uidebug_printcolour(float col[4])
+{
+  printf("Col: %0.2f, %0.2f, %0.2f, %0.2f\n", col[0], col[1], col[2], col[3]);
+}
+
+static void UI_ScreenToNDC(float x, float y, float out[2])
+{
+    out[0] = (x / gPltWindow->winw) * 2.0f - 1.0f;
+    out[1] = 1.0f - (y / gPltWindow->winh) * 2.0f;
+}
 
 static uint8_t grow_vertex_array()
 {
@@ -15,6 +35,7 @@ static uint8_t grow_vertex_array()
     return 0;
   
   gUIctx->vertices = vertices;
+  gUIctx->vertexcapacity = newcap;
 
   return 1;
 }
@@ -32,6 +53,7 @@ static uint8_t grow_index_array()
     return 0;
 
   gUIctx->indices = indices;
+  gUIctx->indexcapacity = newcap;
 
   return 1;
 }
@@ -62,7 +84,8 @@ static uint8_t UI_PushTriangle(
       i2 == UI32_INVALID)
     return 0;
 
-  if (gUIctx->indexcount >= gUIctx->indexcapacity)
+
+  if (gUIctx->indexcount + 3 >= gUIctx->indexcapacity)
   {
     if (!grow_index_array())
       return 0;
@@ -115,10 +138,81 @@ void UI_DrawRect(rectdef rect, rgba col)
   rect_corner(rect, 1, rectv[1].pos);
   rect_corner(rect, 2, rectv[2].pos);
   rect_corner(rect, 3, rectv[3].pos);
+  
+  for (int i = 0; i < 4; i++)
+  {
+    rectv[i].colour[0] = col[0] / 255.0f;
+    rectv[i].colour[1] = col[1] / 255.0f;
+    rectv[i].colour[2] = col[2] / 255.0f;
+    rectv[i].colour[3] = col[3] / 255.0f;
+    UI_ScreenToNDC(rectv[i].pos[0], rectv[i].pos[1], rectv[i].pos);
+    //uidebug_printvert(rectv[i].pos);
+    //uidebug_printcolour(rectv[i].colour);
+
+  }
 
   uint32_t i0 = UI_PushVertex(rectv[0]);
   uint32_t i1 = UI_PushVertex(rectv[1]);
   uint32_t i2 = UI_PushVertex(rectv[2]);
+  uint32_t i3 = UI_PushVertex(rectv[3]);
 
   UI_PushTriangle(i0, i1, i2);
+  UI_PushTriangle(i0, i2, i3);
+}
+
+
+
+void UI_DrawBatch()
+{
+  // Bind shader
+  CBaseShader_Use(gUIctx->shader);
+
+  // Upload data
+  glBindVertexArray(gUIctx->vao);
+  // vbo
+  glBindBuffer(GL_ARRAY_BUFFER, gUIctx->vbo);
+  glBufferData(
+      GL_ARRAY_BUFFER,
+      gUIctx->vertexcount * sizeof(uivertex_t),
+      gUIctx->vertices,
+      GL_DYNAMIC_DRAW
+      );
+  // ebo
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gUIctx->ebo);
+  glBufferData(
+      GL_ELEMENT_ARRAY_BUFFER,
+      gUIctx->indexcount * sizeof(GLuint),
+      gUIctx->indices,
+      GL_DYNAMIC_DRAW
+      );
+  
+  // Vertex data
+  
+  // Position
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(
+      0, 2, 
+      GL_FLOAT, GL_FALSE, 
+      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, pos));
+  // UV
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(
+      1, 2, 
+      GL_FLOAT, GL_FALSE, 
+      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, uv));
+  // colour
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(
+      2, 4, 
+      GL_FLOAT, GL_FALSE, 
+      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, colour));
+  
+  glDrawElements(
+      GL_TRIANGLES, 
+      (GLsizei)gUIctx->indexcount,
+      GL_UNSIGNED_INT,
+      0);
+
+  glBindVertexArray(0);
+
 }

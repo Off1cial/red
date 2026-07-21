@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include "engine/shader.h"
+#include "platform/input.h"
 
 typedef struct uivertex_t
 {
@@ -27,11 +29,14 @@ typedef float rectdef[4];
 #define RECT_W 2
 #define RECT_H 3
 
-typedef uint8_t rgb[3];
-typedef uint8_t rgba[4];
+typedef float rgb[3];
+typedef float rgba[4];
 
 #define RGBAfromRGB(dest, rgb, a) \
   dest[0]=rgb[0];dest[1]=rgb[1];dest[2]=rgb[2];dest[3]=a
+
+#define RGBCopy(dest, rgb) \
+  dest[0]=rgb[0];dest[1]=rgb[1];dest[2]=rgb[2]
 
 // UI colouring
 typedef struct uistyle_t
@@ -62,6 +67,8 @@ typedef struct uicontext_t
   // Draw buffer
   uivertex_t* vertices; // vbo
   uint32_t vertexcount, vertexcapacity;
+  GLuint vao, vbo, ebo;
+  CBaseShader* shader;
 
   uint32_t* indices; // vao
   uint32_t indexcount, indexcapacity;
@@ -74,7 +81,14 @@ typedef struct uicontext_t
 extern uicontext_t* gUIctx;
 
 uint8_t UI_Init();
+
+// ui_draw.c
+
+// Upload data to GPU
+void UI_DrawBatch(); 
+
 void UI_FrameBegin();
+void UI_FrameEnd();
 
 // ui_widget.c
 uint8_t UI_Button( const char* name, rectdef rect );

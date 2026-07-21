@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+pltWindow* gPltWindow = NULL;
 
 pltWindow* PlatformWindow_Create(
     int width, 

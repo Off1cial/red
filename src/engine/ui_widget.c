@@ -1,5 +1,6 @@
 #include "engine/ui.h"
 #include "engine/ui_draw.h"
+#include <stdio.h>
 
 #define SEED_PLACEHOLDER 0
 
@@ -52,6 +53,8 @@ uint8_t UI_Button(const char* name, rectdef rect)
   {
     RGBAfromRGB(colour, gUIctx->style.button_idle, 255);  
   }
+  //printf("Colour determined\n\t(%0.2f, %0.2f, %0.2f, %0.2f)\n",
+    //  colour[0], colour[1], colour[2], colour[3]);
   UI_DrawRect(rect, colour);
 
   return clicked;

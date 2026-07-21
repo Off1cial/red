@@ -29,6 +29,7 @@ typedef struct PLT_INPUT
 
 } pltInput;
 
+extern pltInput* gPltInput;
 
 pltInput*   PlatformInput_Create();
 void        PlatformInput_Destroy(pltInput* input);

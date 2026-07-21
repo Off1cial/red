@@ -25,6 +25,10 @@ typedef struct client_s
 
 int CL_Init(client_t* client, const char* name);
 
+
+void CL_Loop(client_t* client, double dt);
+
+
 int CL_Connect(
     client_t* client, 
     const char* ip, 
