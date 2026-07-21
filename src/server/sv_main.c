@@ -6,6 +6,8 @@
 
 void SV_Close(server_t* server)
 {
+  if (!server)
+    return;
   server->state = SERVER_STATE_STOPPING;
   for (int i = 0; i < server->clientcount; i++)
   {
@@ -51,11 +53,17 @@ int main()
 
 
   double current_time = pltTime_Time(); 
-
   while (server->state == SERVER_STATE_ACTIVE)
   {
     double time = pltTime_Time();
     float dt = (time - current_time);
+    server->seconds+=dt;
+
+    if (server->seconds >= 10.0f)
+    {
+      goto shutdown;
+      break;
+    }
 
     if (dt >= 1.0f / SERVER_TICKRATE)
     {
@@ -67,14 +75,11 @@ int main()
         if (server->clients[i].state != SVCLIENT_STATE_CONNECTED)
           continue;
         server->clients[i].time_elapsed+=dt;
-        if (server->clients[i].time_elapsed >= 8.0f)
-        {
-          SV_ClientDrop(server, i, "Kicked by server!");
-        }
       }
     }
   }
-
+  
+shutdown:
   SV_Close(server);
 
   return 0;

@@ -8,7 +8,9 @@ int SV_ClientDrop(server_t* server, int client, const char* msg)
     return SERVER_FAILURE;
 
   svclient_t* cl = &server->clients[client];
-  
+  if (cl->state != SVCLIENT_STATE_CONNECTED)
+    return SERVER_FAILURE;
+
   // Send packet with the message
   netpacket_t packet = {0};
   packet.type = NET_PACKET_DISCONNECT;
@@ -24,3 +26,5 @@ int SV_ClientDrop(server_t* server, int client, const char* msg)
 
   return SERVER_SUCCESS;
 }
+
+

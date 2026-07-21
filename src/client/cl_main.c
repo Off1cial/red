@@ -42,6 +42,8 @@ int main()
 
   client = malloc(sizeof(client_t));
   CL_Init(client, "redw0od0");
+  char msg_disconnect[] = "Chode";
+  size_t msg_disconnect_len = strlen(msg_disconnect);
   printf("Hello world\n");
 
   pltWindow* win = PlatformWindow_Create(640,480, "RED");
@@ -82,11 +84,13 @@ int main()
   pltTime_Init();
   double timestamp = pltTime_Time();
   int quit = 0;
+  int con_attempts = 0;
   while(!quit)
   {
 
     double time = pltTime_Time();
     double dt = time - timestamp;
+
     if (client->socket_udp != -1)
       CL_ReceivePacketUDP(client);
 
@@ -94,11 +98,20 @@ int main()
     {
       if (client->state != CSTATE_CONNECTED)
       {
-        printf("Attempting connection...\n");
+        /*
+        printf("[CLIENT]: Connection attempt %d\n", con_attempts);
+        con_attempts++;
         if (client->socket_udp == -1)
           CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
         else
         CL_SendConnectPacket(client);
+        */
+        CL_GameServerJoin(
+            client, 
+            "127.0.0.1", 
+            SERVER_PORT, 
+            NET_PROTOCOL_UDP, 
+            4);
       }
 
       if (client->state == CSTATE_CONNECTED)
@@ -131,6 +144,10 @@ int main()
       camera->origin = VectorSub(camera->origin, camera->front);
     }
 
+    if (input->pressed[SDL_SCANCODE_P] && (client->socket_udp >= 0))
+    {
+      CL_GameServerDisconnect(client, msg_disconnect, msg_disconnect_len );
+    }
 
     Camera_Update(camera);
     CBaseShader_Use(shader);

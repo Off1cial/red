@@ -19,6 +19,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB_RECURSE SOURCE_SHARED
     src/corebase/*.c
     src/corebase/*.cpp
+    src/shared/network/*.c
+    src/shared/network/*.cpp
 )
 
 # -------------------------
@@ -46,6 +48,7 @@ file(GLOB_RECURSE SOURCE_SERVER
     src/server/*.cpp
     src/platform/network/*.c
     src/platform/network/*.cpp
+
     
 )
 

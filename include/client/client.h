@@ -43,4 +43,8 @@ int CL_ReceivePacketUDP(client_t* client);
 
 // Makes a certain number of attempts to join a server
 int CL_GameServerJoin(client_t* client, const char* ip, short int port, netprotocol_t protocol, int retries);
-int CL_GameServerDisconnect(client_t* client, char msg[NET_PACKET_SIZE]);
+int CL_GameServerDisconnect(
+    client_t* client, 
+    char* msg,
+    size_t msglen
+    );

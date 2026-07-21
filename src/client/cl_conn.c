@@ -1,9 +1,16 @@
 #include "client/client.h"
 #include "platform/network/network.h"
+#include "shared/network/packet.h"
+#include "corebase/time.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
+static void closesocket(netsocket_t* socket)
+{
+  close(*socket);
+  *socket = -1;
+}
 
 int CL_SendConnectPacket(client_t* client)
 {
@@ -176,5 +183,82 @@ int CL_Disconnect(client_t* client)
 
   client->state = CSTATE_EMPTY;
 
+  return CLIENT_SUCCESS;
+}
+
+
+
+int CL_GameServerJoin(
+    client_t* client,
+    const char* ip,
+    short int port,
+    netprotocol_t protocol, 
+    int retries
+)
+{
+  double time_attemptdelay = 2.0f;
+  double time_attemptlast; 
+  int attempts_made = 0;
+
+  double time_start = pltTime_Time();
+  time_attemptlast = time_start;
+
+  while (attempts_made < retries)
+  {
+
+    if (client->state == CSTATE_CONNECTED)
+      goto connected; 
+    double time = pltTime_Time();
+    if (time - time_attemptlast >= time_attemptdelay)
+    {
+      attempts_made++;
+      time_attemptlast = time;
+      int conresult = CL_Connect(client, ip, port, protocol);
+      if (conresult == CLIENT_FAILURE )
+        continue;
+
+      int presult = CL_SendConnectPacket(client);
+      if (presult == CLIENT_FAILURE)
+        continue;
+
+    }
+  }
+  
+  printf("[CLIENT]: Connection failed after %d retries\n", retries);
+  return CLIENT_FAILURE;
+
+connected:
+  printf("[CLIENT]: Successfully joined game server!");
+  return CLIENT_SUCCESS;
+
+}
+
+int CL_GameServerDisconnect(client_t* client, char* msg, size_t msglen)
+{
+  if (!client)
+    return CLIENT_FAILURE;
+
+  if (client->state != CSTATE_CONNECTED)
+    return CLIENT_FAILURE;
+  
+  char pdata[NET_PACKET_SIZE];
+  size_t n = strlen(client->name) + msglen;
+  snprintf(pdata, n, "%s: %s", client->name, msg);
+
+  netpacket_t discpacket = NetPacket_Prepare(
+      NET_PACKET_DISCONNECT,
+      pdata,
+      strlen(pdata)
+      );
+  
+  CL_SendPacketUDP(client, &discpacket);
+
+  if (client->socket_tcp != -1)
+    closesocket(&client->socket_tcp);
+  if (client->socket_udp != -1)
+    closesocket(&client->socket_udp);
+  
+  client->state = CSTATE_EMPTY;
+  printf("[CLIENT]: Client disconnected from server,\n  %s\n", msg);
   return CLIENT_SUCCESS;
 }

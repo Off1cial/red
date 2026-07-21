@@ -14,9 +14,13 @@ typedef struct PLT_INPUT
   bool released[SDL_SCANCODE_COUNT];
 
   // Mouse
-  
+  bool mCurrent[5];
+  bool mPrevious[5];
+
   float mx, my; // Cursor position relative to top-left origin
   float mxrel, myrel; // Cursor movement
+    
+
 
   // Extra
   bool eventWindowResized;

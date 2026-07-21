@@ -22,3 +22,10 @@ typedef struct netpacket_t
   byte data[512]; 
 
 } netpacket_t;
+
+
+netpacket_t NetPacket_Prepare(
+    netpacktype_t type, 
+    byte data[NET_PACKET_SIZE],
+    size_t nbytes
+);
