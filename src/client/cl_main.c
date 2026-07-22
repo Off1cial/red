@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <float.h>
 
 #include "platform/window.h"
 #include "platform/input.h"
@@ -8,7 +9,7 @@
 #include "engine/shader.h"
 #include "engine/mesh.h"
 #include "engine/camera.h"
-#include "engine/ui.h"
+#include "engine/ui/ui.h"
 
 #include "client/client.h"
 #include "shared/network/packet.h"
@@ -152,14 +153,22 @@ int main()
     }
     
     rectdef rect = {40,40,200,100};
-    if (UI_Button("Button", rect))
-    {
-      printf("Clicked\n");
-      if (client->state != CSTATE_CONNECTED)
-        CL_GameServerJoin(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP, 2);
-    }
+    rectdef windowrect = {20, 20, 400, 200};
+    rectdef win2; 
+    UIRECT_NULL(win2);
 
-    Camera_Look(camera, input->mxrel, input->myrel, 0.2f);
+    if (UI_Begin("Window", windowrect, 0))
+    {
+      if (UI_Button("Button", rect))
+      {
+        printf("Clicked\n");
+        if (client->state != CSTATE_CONNECTED)
+          CL_GameServerJoin(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP, 2);
+      }
+    }
+    UI_End();
+
+    Camera_Look(camera, input->mxrel, input->myrel, 0.8f);
 
     if (input->pressed[SDL_SCANCODE_S])
     {

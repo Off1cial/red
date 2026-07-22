@@ -1,4 +1,4 @@
-#include "engine/ui.h"
+#include "engine/ui/ui.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +15,7 @@ uint8_t UI_Init()
   memset(gUIctx, 0, sizeof(uicontext_t));
 
   gUIctx->vertexcapacity = 128;
-gUIctx->indexcapacity = 128;
+  gUIctx->indexcapacity = 128;
 
   size_t cv = sizeof(uivertex_t) * gUIctx->vertexcapacity;
   size_t ci = sizeof(uint32_t) * gUIctx->indexcapacity;
@@ -34,10 +34,16 @@ gUIctx->indexcapacity = 128;
   static rgb colButtonHovered = {10, 120, 180};
   static rgb colButtonActive = {10, 180, 210};
 
+
   uistyle_t* style = &gUIctx->style;
-  RGBCopy(style->button_idle, colButtonIdle);
-  RGBCopy(style->button_hovered, colButtonHovered);
-  RGBCopy(style->button_clicked, colButtonActive);
+  RGBSet(style->button_idle,     10,  50, 180);
+  RGBSet(style->button_hovered,  10, 120, 180);
+  RGBSet(style->button_clicked,  10, 180, 210);
+
+  RGBASet(style->window_bg_hovered, 10, 10,  10, 255);
+  RGBASet(style->window_bg_idle,    10, 10,  10, 100);
+  RGBASet(style->window_bg_title,   10, 10, 140, 100);
+
 
   // OpenGL
 
@@ -48,7 +54,7 @@ gUIctx->indexcapacity = 128;
   gUIctx->shader = CBaseShader_Create(
       "../Assets/Shaders/vert_ui.vs",
       "../Assets/Shaders/frag_ui.fs");
-  
+
   return 1;
 }
 

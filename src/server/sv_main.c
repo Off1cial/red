@@ -59,12 +59,6 @@ int main()
     float dt = (time - current_time);
     server->seconds+=dt;
 
-    if (server->seconds >= 30.0f)
-    {
-      goto shutdown;
-      break;
-    }
-
     if (dt >= 1.0f / SERVER_TICKRATE)
     {
       current_time = time;
@@ -79,7 +73,6 @@ int main()
     }
   }
   
-shutdown:
   SV_Close(server);
 
   return 0;

@@ -1,4 +1,4 @@
-#include "engine/ui_draw.h"
+#include "engine/ui/ui_draw.h"
 #include <stdlib.h>
 #include "platform/common.h"
 #include "platform/window.h"
@@ -123,7 +123,7 @@ static void rect_corner(rectdef rect, int i, float out[2])
   }
 }
 
-static void rect_corner_all(rectdef rect, float out[2][4])
+static void rect_corner_all(rectdef rect, float out[4][2])
 {
   for (int i = 0; i < 4; i++)
     rect_corner(rect, i, out[i]);
@@ -145,12 +145,16 @@ void UI_DrawRect(rectdef rect, rgba col)
     rectv[i].colour[1] = col[1] / 255.0f;
     rectv[i].colour[2] = col[2] / 255.0f;
     rectv[i].colour[3] = col[3] / 255.0f;
+
     UI_ScreenToNDC(rectv[i].pos[0], rectv[i].pos[1], rectv[i].pos);
     //uidebug_printvert(rectv[i].pos);
     //uidebug_printcolour(rectv[i].colour);
 
   }
 
+  // Since it uses openGL, i can have gradients
+  //rectv[3].colour[0] = 1.0f;
+  //rectv[2].colour[1] = 1.0f;
   uint32_t i0 = UI_PushVertex(rectv[0]);
   uint32_t i1 = UI_PushVertex(rectv[1]);
   uint32_t i2 = UI_PushVertex(rectv[2]);
@@ -160,10 +164,53 @@ void UI_DrawRect(rectdef rect, rgba col)
   UI_PushTriangle(i0, i2, i3);
 }
 
+void UI_DrawRectOutline(rectdef rect, rgba col, float thickness)
+{
+    rectdef top = {
+        rect[RECT_X],
+        rect[RECT_Y],
+        rect[RECT_W],
+        thickness
+    };
+
+    rectdef bottom = {
+        rect[RECT_X],
+        rect[RECT_Y] + rect[RECT_H] - thickness,
+        rect[RECT_W],
+        thickness
+    };
+
+    rectdef left = {
+        rect[RECT_X],
+        rect[RECT_Y],
+        thickness,
+        rect[RECT_H]
+    };
+
+    rectdef right = {
+        rect[RECT_X] + rect[RECT_W] - thickness,
+        rect[RECT_Y],
+        thickness,
+        rect[RECT_H]
+    };
+
+    UI_DrawRect(top, col);
+    UI_DrawRect(bottom, col);
+    UI_DrawRect(left, col);
+    UI_DrawRect(right, col);
+}
 
 
 void UI_DrawBatch()
 {
+  glDisable(GL_DEPTH_TEST);   // UI is 2D — ordering, not depth, decides visibility
+  glDepthMask(GL_FALSE);      // don't let UI write into the depth buffer either
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // needed if you ever use alpha < 255
+
+
+
   // Bind shader
   CBaseShader_Use(gUIctx->shader);
 
@@ -214,5 +261,8 @@ void UI_DrawBatch()
       0);
 
   glBindVertexArray(0);
+
+  glDepthMask(GL_TRUE);       // restore state for whatever draws next (next frame's 3D pass)
+  glEnable(GL_DEPTH_TEST);
 
 }

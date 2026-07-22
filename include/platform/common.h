@@ -30,5 +30,12 @@ typedef unsigned short int lbyte;
 typedef char* string;
 
 
+static inline void EXIT_ERROR(const char* msg)
+{
+  printf("[EXIT]: %s\n", msg);
+  exit(1);
+}
+
+
 
 
