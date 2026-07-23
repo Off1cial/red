@@ -5,6 +5,7 @@
 #include "platform/common.h"
 #include "platform/network/network.h"
 #include "shared/network/packet.h"
+#include "shared/network/pframe.h"
 
 #include "server/sv_client.h"
 
@@ -49,7 +50,7 @@ int SV_Init(
     server_t* server, 
     const char* name, 
     netdomain_t domain
-    );
+);
 
 void SV_Close(server_t* server);
 

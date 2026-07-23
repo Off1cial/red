@@ -29,6 +29,16 @@ typedef unsigned short int lbyte;
 
 typedef char* string;
 
+#ifdef true
+#undef true
+#endif
+
+#ifdef false
+#undef false
+#endif
+
+typedef enum {true, false} rboolean;
+
 
 static inline void EXIT_ERROR(const char* msg)
 {

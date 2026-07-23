@@ -7,6 +7,7 @@
 
 #include "shared/network/client.h"
 #include "shared/network/packet.h"
+#include "shared/network/pframe.h"
 
 typedef struct client_s
 {
@@ -33,6 +34,7 @@ int CL_Init(client_t* client, const char* name);
 
 void CL_Loop(client_t* client, double dt);
 
+// Network fundamentals
 
 int CL_Connect(
     client_t* client, 
@@ -50,6 +52,9 @@ int CL_SendConnectPacket(client_t* client);
 
 int CL_ReceivePacketUDP(client_t* client);
 
+// Game based
+
+
 // Makes a certain number of attempts to join a server
 int CL_GameServerJoin(client_t* client, const char* ip, short int port, netprotocol_t protocol, int retries);
 int CL_GameServerDisconnect(
@@ -57,3 +62,9 @@ int CL_GameServerDisconnect(
     char* msg,
     size_t msglen
     );
+
+
+// Send player information to the current server
+int CL_SendPlayerFrame(client_t* client, playerframe_t* frame);
+// Receive player information from the current server
+int CL_ReceivePlayerFrame(client_t* client, playerframe_t* frame);

@@ -99,11 +99,14 @@ typedef struct uicontext_t
   uint8_t windowpersistcount;
 
   uiwindow_t* windowdrag;
+  float windowdrag_offset[2];
+
+  uiwindow_t* windowresize;
 
   // Used to find the current window, reset each frame (top = 0)
   uiwindow_t* windowstack[UIWindowStackMax]; // Pointers into persistence
   uint8_t windowstack_top; // 0-127
-  uint8_t hotwindow_t;
+  uint8_t hotwindow;
 
   // Draw buffer
   uivertex_t* vertices; // vbo

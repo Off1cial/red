@@ -19,6 +19,7 @@ typedef struct PLT_INPUT
 
   float mx, my; // Cursor position relative to top-left origin
   float mxrel, myrel; // Cursor movement
+  bool mouselocked;
     
 
 
@@ -35,14 +36,27 @@ pltInput*   PlatformInput_Create();
 void        PlatformInput_Destroy(pltInput* input);
 
 
-void        PlatformInput_Poll(pltInput* input, int* quit);
+void        PlatformInput_Poll(SDL_Window* window, pltInput* input, int* quit);
 
 
-#define pltInput_MouseClick(button) \
-  gPltInput->mCurrent[button] && !gPltInput->mPrevious[button]
+static inline uint8_t pltInput_MouseClick(int button)
+{
+  return gPltInput->mCurrent[button] && !gPltInput->mPrevious[button];
+}
 
-#define pltInput_MouseRelease(button) \
-  !gPltInput->mCurrent[button] && gPltInput->mPrevious[button]
+static inline uint8_t pltInput_MouseRelease(int button)
+{
+  return (!gPltInput->mCurrent[button]) && gPltInput->mPrevious[button];
+}
 
-#define pltInput_MouseDown(button) \
-  gPltInput->mCurrent[button]
+static inline uint8_t pltInput_MouseDown(int button)
+{
+  return gPltInput->mCurrent[button];
+}
+
+
+static inline void pltInput_ToggleMouseLock(pltInput* input, SDL_Window* window)
+{
+  input->mouselocked = !input->mouselocked;
+  SDL_SetWindowRelativeMouseMode(window, input->mouselocked);
+}

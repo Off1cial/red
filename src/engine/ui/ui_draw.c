@@ -6,6 +6,22 @@
 
 #define UI32_INVALID ((uint32_t)-1) // 0xFFFFFFFF
 
+static void UI_ScreenToNDC(float x, float y, float out[2])
+{
+    out[0] = (x / gPltWindow->winw) * 2.0f - 1.0f;
+    out[1] = 1.0f - (y / gPltWindow->winh) * 2.0f;
+}
+
+static inline void uivertex_setndcpos(uivertex_t* v, float pos[2])
+{
+  UI_ScreenToNDC(pos[0], pos[1], v->pos);
+}
+
+static inline void uivertex_setcolour(uivertex_t* v, rgba colour)
+{
+  v->colour[0] = colour[0] / 255; v->colour[1] = colour[1] / 255;
+  v->colour[2] = colour[2] / 255; v->colour[3] = colour[3] / 255;
+}
 
 static void uidebug_printvert(float pos[2])
 {
@@ -17,11 +33,7 @@ static void uidebug_printcolour(float col[4])
   printf("Col: %0.2f, %0.2f, %0.2f, %0.2f\n", col[0], col[1], col[2], col[3]);
 }
 
-static void UI_ScreenToNDC(float x, float y, float out[2])
-{
-    out[0] = (x / gPltWindow->winw) * 2.0f - 1.0f;
-    out[1] = 1.0f - (y / gPltWindow->winh) * 2.0f;
-}
+
 
 static uint8_t grow_vertex_array()
 {
@@ -200,6 +212,26 @@ void UI_DrawRectOutline(rectdef rect, rgba col, float thickness)
     UI_DrawRect(right, col);
 }
 
+void UI_DrawTriangle(float v0[2], float v1[2], float v2[2], rgba colour)
+{
+  uivertex_t verts[3];
+  memset(verts, 0, sizeof(uivertex_t)* 3);
+
+  uivertex_setndcpos(&verts[0], v0);
+  uivertex_setndcpos(&verts[1], v1);
+  uivertex_setndcpos(&verts[2], v2);
+
+
+  uivertex_setcolour(&verts[0], colour);
+  uivertex_setcolour(&verts[1], colour);
+  uivertex_setcolour(&verts[2], colour);
+
+  GLuint i0 = UI_PushVertex(verts[0]);
+  GLuint i1 = UI_PushVertex(verts[1]);
+  GLuint i2 = UI_PushVertex(verts[2]);
+
+  UI_PushTriangle(i0, i1, i2);
+}
 
 void UI_DrawBatch()
 {

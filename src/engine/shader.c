@@ -1,5 +1,4 @@
 #include "engine/shader.h"
-#include "corebase/vectors.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,6 +108,15 @@ static int Shader_Load(CBaseShader* shader, const char* vertPath, const char* fr
   shader->uniforms[SH_UNIFORM_PROJECTION] = 
     glGetUniformLocation(shader->program, "uProj");
 
+  // UI
+  shader->uniforms[SH_UNIFORM_UI_RECTPOS] =
+    glGetUniformLocation(shader->program, "uRectPos");
+  shader->uniforms[SH_UNIFORM_UI_RECTSIZE] = 
+    glGetUniformLocation(shader->program, "uRectSize");
+  shader->uniforms[SH_UNIFORM_UI_ROUNDING] = 
+    glGetUniformLocation(shader->program, "uRounding");
+
+
   shader->srcVertex = vertPath;
   shader->srcFrag = fragPath;
   return 1;
@@ -144,7 +152,7 @@ void CBaseShader_SetMat4(CBaseShader* shader, CBaseShaderLocType loctype, mat4 m
 {
   assert(shader);
   GLuint loc = shader->uniforms[loctype];
-  glUniformMatrix4fv(loc, 1, GL_FALSE, (float*)m.m);
+  glUniformMatrix4fv(loc, 1, GL_FALSE, (float*)m);
 
   /*
   printf("Uploaded to loc %u:\n", loc);
@@ -156,3 +164,20 @@ void CBaseShader_SetMat4(CBaseShader* shader, CBaseShaderLocType loctype, mat4 m
   */
 }
 
+void CBaseShader_SetVec2(CBaseShader* shader, CBaseShaderLocType loctype, float vec2[2])
+{
+  if (!shader)
+    exit(1);
+  
+  GLuint loc = shader->uniforms[loctype];
+  glUniform2fv(loc, 1, vec2);
+}
+
+void CBaseShader_SetFloat(CBaseShader* shader, CBaseShaderLocType loctype, float f)
+{
+  if (!shader)
+    exit(1);
+
+  GLuint loc = shader->uniforms[loctype];
+  glUniform1f(loc, f);
+}

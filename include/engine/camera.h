@@ -2,8 +2,7 @@
 #define CBASE_CAMERA_H
 
 
-#include "corebase/vectors.h"
-
+#include "corebase/mathlib.h"
 
 typedef union cViewport
 {
@@ -16,11 +15,11 @@ typedef union cViewport
 
 typedef struct camera_t
 {
-  Vector origin;
-  QAngle angles;
-  Vector front;
-  Vector right;
-  Vector up;
+  vec3_t origin;
+  qangle angles;
+  vec3_t front;
+  vec3_t right;
+  vec3_t up;
 
   float fov;
   float far, near;
@@ -32,7 +31,7 @@ typedef struct camera_t
 } camera_t;
 
 
-camera_t* Camera_Create(Vector position, Vector direction, cViewport viewport);
+camera_t* Camera_Create(vec3_t position, vec3_t direction, cViewport viewport);
 
 void Camera_Look(camera_t* camera, float m_dx, float m_dy, float sens);
 

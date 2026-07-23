@@ -67,6 +67,7 @@ int SV_ReceivePacketUDP(server_t* server)
         {
           printf("[SERVER]: Client is already present\n");
           client_id = client - server->clients;
+          
         }
         else
         {

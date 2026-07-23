@@ -3,7 +3,6 @@
 #include "server/server.h"
 #include "corebase/time.h"
 
-
 void SV_Close(server_t* server)
 {
   if (!server)
@@ -16,7 +15,6 @@ void SV_Close(server_t* server)
   
   free(server);
 }
-
 
 
 server_t* server = NULL;
@@ -52,24 +50,28 @@ int main()
   printf("[SERVER]: %dHz Server started on %s:%d\n", SERVER_TICKRATE, hostip, ntohs(server->addr_udp.sin_port));
 
 
-  double current_time = pltTime_Time(); 
+  double previous = pltTime_Time(); 
+  double accumulator = 0.0f;
+
+
   while (server->state == SERVER_STATE_ACTIVE)
   {
-    double time = pltTime_Time();
-    float dt = (time - current_time);
-    server->seconds+=dt;
 
-    if (dt >= 1.0f / SERVER_TICKRATE)
+    double time = pltTime_Time();
+    accumulator += time - previous;
+    previous = time;
+
+    if (accumulator >= 1.0f / SERVER_TICKRATE)
     {
-      current_time = time;
       //SV_ClientAcceptTCP(server);
       SV_ReceivePacketUDP(server);
       for (int i = 0; i < server->clientcount; i++)
       {
         if (server->clients[i].state != SVCLIENT_STATE_CONNECTED)
           continue;
-        server->clients[i].time_elapsed+=dt;
+        server->clients[i].time_elapsed+=time-previous;
       }
+      accumulator -= (1.0 / SERVER_TICKRATE);
     }
   }
   

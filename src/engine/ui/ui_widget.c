@@ -1,6 +1,8 @@
 #include "engine/ui/ui.h"
 #include "engine/ui/ui_draw.h"
 #include "platform/common.h"
+#include "corebase/mathlib.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
@@ -9,13 +11,24 @@
 
 #define SEED_PLACEHOLDER 0
 
-#define WINDOW_TITLEBAR_HEIGHT 24
+#define WINDOW_TITLEBAR_HEIGHT 16
+#define WINDOW_RESIZEHANDLE_SIZE 12
+
+static inline uint8_t ui_windowhasflag(uiwindow_t* win, uiwindowflag_t flag)
+{
+  return (win->flags & flag) != 0;
+}
 
 static uint32_t ui_hash_id(const char* str, uint32_t seed) {
     uint32_t h = seed ? seed : 2166136261u;
     while (*str) { h ^= (uint8_t)*str++; h *= 16777619u; }
     return h;
 }
+
+#define UI_RECTCORNER_TL 0
+#define UI_RECTCORNER_BL 1
+#define UI_RECTCORNER_BR 2
+#define UI_RECTCORNER_TR 3
 
 static void ui_rectcorner(rectdef rect, int i, float out[2])
 {
@@ -251,6 +264,18 @@ static inline void windowtitlebar(uiwindow_t* win, rectdef out_titlebar)
   out_titlebar[RECT_H] = WINDOW_TITLEBAR_HEIGHT;
 }
 
+static inline uint8_t ui_windowresizehover(uiwindow_t* win)
+{
+  if ((win->flags & UIWindowFlag_NoResize) != 0)
+    return 0;
+  rectdef rect;
+  rect[RECT_X] = win->rect[RECT_X] + win->rect[RECT_W] - WINDOW_RESIZEHANDLE_SIZE;
+  rect[RECT_Y] = win->rect[RECT_Y] + win->rect[RECT_H] - WINDOW_RESIZEHANDLE_SIZE;
+  rect[RECT_W] = WINDOW_RESIZEHANDLE_SIZE;
+  rect[RECT_H] = WINDOW_RESIZEHANDLE_SIZE;
+  return ui_rectcontained(rect, gPltInput->mx, gPltInput->my);
+}
+
 uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
 {
   uiwindow_t* win = ui_windownew(name, rect, flags);
@@ -261,32 +286,63 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   if (titlebar_h > 0)
     windowtitlebar(win, titlebar);
   
-  /*
-  if (win->collapsed)
+
+  uint8_t hovered = ui_rectcontained(win->rect, gPltInput->mx, gPltInput->my);
+  uint8_t titlebar_hovered = (titlebar_h > 0) && 
+    ui_rectcontained(titlebar, gPltInput->mx, gPltInput->my);
+
+  uint8_t resize_hovered = ui_windowresizehover(win);
+  
+  // Start a drag
+  if (titlebar_hovered && !gUIctx->windowdrag && pltInput_MouseClick(0))
   {
-    if (gUIctx->windowstack_top >= UIWindowStackMax)
-      EXIT_ERROR("[UI][WINDOW]: Window stack overflow");
-    gUIctx->windowstack[gUIctx->windowstack_top++] = win;
-    return 0;
+    gUIctx->windowdrag = win;
+    gUIctx->windowdrag_offset[0] = gPltInput->mx - win->rect[RECT_X];
+    gUIctx->windowdrag_offset[1] = gPltInput->my - win->rect[RECT_Y];
+      //printf("DRAG START mx=%.2f my=%.2f rectX=%.2f rectY=%.2f offX=%.2f offY=%.2f\n",
+    //gPltInput->mx, gPltInput->my, win->rect[RECT_X], win->rect[RECT_Y],
+    //gUIctx->windowdrag_offset[0], gUIctx->windowdrag_offset[1]);
   }
 
-  */
-  uint8_t hovered = ui_rectcontained(rect, gPltInput->mx, gPltInput->my);
-  if (hovered)
+  if (gUIctx->windowdrag == win)
   {
-    if (ui_rectcontained(titlebar, gPltInput->mx, gPltInput->my))
+    if (pltInput_MouseDown(0))
     {
-      // User is hovering on the titlebar
-      if (pltInput_MouseDown(0))
-      {
-        win->rect[RECT_X] = gPltInput->mx;
-        win->rect[RECT_Y] = gPltInput->my;
-      }
-      if (pltInput_MouseClick(1))
-        win->collapsed = !win->collapsed;
+      //printf("Dragging..\n");
+      //printf("Win(%0.2f, %0.2f), M(%0.2f, %0.2f)\n", 
+      //  win->rect[RECT_X], win->rect[RECT_Y],
+      //  gPltInput->mx, gPltInput->my
+      //);
+      win->rect[RECT_X] = gPltInput->mx - gUIctx->windowdrag_offset[0];
+      win->rect[RECT_Y] = gPltInput->my - gUIctx->windowdrag_offset[1];
+    }
+    else // Mouse release
+    {
+      //printf("Mouse released\n");
+      gUIctx->windowdrag = NULL;
     }
   }
   
+
+  // Start a resize
+  if (resize_hovered && !gUIctx->windowresize && pltInput_MouseClick(0))
+    gUIctx->windowresize = win;
+
+  if (gUIctx->windowresize)
+  {
+    if (pltInput_MouseDown(0))
+    {
+      // Resize window
+      win->rect[RECT_W] += gPltInput->mx - (win->rect[RECT_X] + win->rect[RECT_W]);
+      win->rect[RECT_H] += gPltInput->my - (win->rect[RECT_Y] + win->rect[RECT_H]);
+    }
+    else
+    {
+      gUIctx->windowresize = NULL;  
+    }
+  }
+  
+
   // adjust cursor for padding
   win->cursor_x = win->rect[RECT_X] + 8.0f;
   win->cursor_y = win->rect[RECT_Y] + titlebar_h + 8.0f;
@@ -294,6 +350,14 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   if (gUIctx->windowstack_top >= UIWindowStackMax)
       EXIT_ERROR("[UI][WINDOW]: Window stack overflow");
   gUIctx->windowstack[gUIctx->windowstack_top++] = win;
+  
+  // Early exit if collapsed
+  if (win->collapsed)
+  {
+    UI_DrawRect(titlebar, gUIctx->style.window_bg_title);
+    return 0;
+  }
+
 
   // Draw window
   
@@ -319,6 +383,17 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
     UI_SETCOLRGBA_WHITE(border);
     border[3]=170;
     UI_DrawRectOutline(win->rect, border, 1.0f);
+  }
+
+  if (!ui_windowhasflag(win, UIWindowFlag_NoResize))
+  {
+    vec2_t verts[3];
+    ui_rectcorner(win->rect, UI_RECTCORNER_BR, verts[0]);
+    ui_rectcorner(win->rect, UI_RECTCORNER_BR, verts[1]);
+    ui_rectcorner(win->rect, UI_RECTCORNER_BR, verts[2]);
+    verts[1][1] -= WINDOW_RESIZEHANDLE_SIZE;
+    verts[2][0] -= WINDOW_RESIZEHANDLE_SIZE;
+    UI_DrawTriangle(verts[0], verts[1], verts[2], gUIctx->style.window_bg_title);
   }
 
   return 1;

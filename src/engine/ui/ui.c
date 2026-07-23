@@ -42,7 +42,7 @@ uint8_t UI_Init()
 
   RGBASet(style->window_bg_hovered, 10, 10,  10, 255);
   RGBASet(style->window_bg_idle,    10, 10,  10, 100);
-  RGBASet(style->window_bg_title,   10, 10, 140, 100);
+  RGBASet(style->window_bg_title,   40, 40, 140, 255);
 
 
   // OpenGL
@@ -65,6 +65,7 @@ void UI_FrameBegin()
 
   gUIctx->vertexcount = 0;
   gUIctx->indexcount = 0;
+
 
 
 }

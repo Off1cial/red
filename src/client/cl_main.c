@@ -4,7 +4,9 @@
 
 #include "platform/window.h"
 #include "platform/input.h"
+
 #include "corebase/time.h"
+#include "corebase/mathlib.h"
 
 #include "engine/shader.h"
 #include "engine/mesh.h"
@@ -18,6 +20,7 @@
 // ninja -C build
  
 // https://www.reddit.com/r/playboicarti/s/lpdLQ9IYHt
+
 
 
 // test triangle
@@ -90,12 +93,14 @@ int main()
   
   CBaseShader* shadertest = CBaseShader_Create("../Assets/Shaders/vert_test.vs", "../Assets/Shaders/frag_test.fs");
   CBaseShader* shader     = CBaseShader_Create("../Assets/Shaders/vert_unlit.vs", "../Assets/Shaders/frag_unlit.fs");
-  
+ 
+  Mat4Identity(MAT4_IDENTITY);
+
   CBaseMesh* mTriangle = CBaseMesh_Create(3, 3);
   CBaseMesh_PushTriangleVerts(mTriangle, v0, v1, v2);
   CBaseMesh_Upload(mTriangle, GL_STATIC_DRAW);
 
-  camera_t* camera = Camera_Create(VECTOR_ZERO, VECTOR_AXIS_Z_NEG, (cViewport){0,0,1280,720});
+  camera_t* camera = Camera_Create(VEC_ZERO, VEC_AXIS_Z_NEG, (cViewport){0,0,1280,720});
 
   glViewport(0,0, win->winw, win->winh);
 
@@ -140,7 +145,7 @@ int main()
     glClearColor(0.12f, 0.1f, 0.1f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
       
-    PlatformInput_Poll(input, &quit); 
+    PlatformInput_Poll(gPltWindow->window, input, &quit); 
     UI_FrameBegin();
     // Check for window resize
     if (input->eventWindowResized)
@@ -173,7 +178,7 @@ int main()
     if (input->pressed[SDL_SCANCODE_S])
     {
       printf("Move\n");
-      camera->origin = VectorSub(camera->origin, camera->front);
+      VectorSub(camera->origin, camera->front, camera->origin);
     }
 
     if (input->pressed[SDL_SCANCODE_P] && (client->socket_udp >= 0))
@@ -185,7 +190,7 @@ int main()
     CBaseShader_Use(shader);
     CBaseShader_SetMat4(shader, SH_UNIFORM_VIEW, camera->view);
     CBaseShader_SetMat4(shader, SH_UNIFORM_PROJECTION, camera->projection);
-    CBaseShader_SetMat4(shader, SH_UNIFORM_MODEL, Mat4Identity());
+    CBaseShader_SetMat4(shader, SH_UNIFORM_MODEL, MAT4_IDENTITY);
 
     CBaseMesh_Draw(mTriangle, GL_TRIANGLES);
     UI_DrawBatch();
