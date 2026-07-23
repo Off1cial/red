@@ -32,6 +32,8 @@ file(GLOB_RECURSE SOURCE_CLIENT
     src/client/*.cpp
     src/engine/*.c
     src/engine/*.cpp
+    src/game/client/*.c
+    src/game/client/*.cpp
 )
 
 file(GLOB_RECURSE SOURCE_CLIENT_PLATFORM
@@ -48,7 +50,8 @@ file(GLOB_RECURSE SOURCE_SERVER
     src/server/*.cpp
     src/platform/network/*.c
     src/platform/network/*.cpp
-
+    src/game/server/*.c
+    src/game/server/*.cpp
     
 )
 

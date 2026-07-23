@@ -28,5 +28,5 @@ typedef struct material_t
   int anim_count; // 0 if no anim
 
 
-} material_t
+} material_t;
 

@@ -1,4 +1,4 @@
-#include "server/server.h"
+#include "game/server/server.h"
 #include "shared/network/packet.h"
 
 int SV_SendPacketToClientUDP(

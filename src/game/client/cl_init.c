@@ -1,4 +1,4 @@
-#include "client/client.h"
+#include "game/client/client.h"
 
 
 int CL_Init(client_t* client, const char* name)

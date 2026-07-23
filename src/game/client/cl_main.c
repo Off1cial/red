@@ -13,7 +13,7 @@
 #include "engine/camera.h"
 #include "engine/ui/ui.h"
 
-#include "client/client.h"
+#include "game/client/client.h"
 #include "shared/network/packet.h"
 
 // cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
@@ -100,7 +100,7 @@ int main()
   CBaseMesh_PushTriangleVerts(mTriangle, v0, v1, v2);
   CBaseMesh_Upload(mTriangle, GL_STATIC_DRAW);
 
-  camera_t* camera = Camera_Create(VEC_ZERO, VEC_AXIS_Z_NEG, (cViewport){0,0,1280,720});
+  camera_t* camera = Camera_Create(VEC_ZERO, VEC_AXIS_Z, (cViewport){0,0,1280,720});
 
   glViewport(0,0, win->winw, win->winh);
 

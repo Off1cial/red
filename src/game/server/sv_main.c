@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <netdb.h>
-#include "server/server.h"
+#include <pthread.h>
+#include "game/server/server.h"
 #include "corebase/time.h"
 
 void SV_Close(server_t* server)
@@ -18,6 +19,12 @@ void SV_Close(server_t* server)
 
 
 server_t* server = NULL;
+
+void* thread_test()
+{
+  printf("Thread works\n");
+  return NULL;
+}
 
 int main()
 {

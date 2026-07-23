@@ -1,4 +1,4 @@
-#include "server/server.h"
+#include "game/server/server.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <netinet/in.h>

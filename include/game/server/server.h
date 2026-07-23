@@ -7,7 +7,7 @@
 #include "shared/network/packet.h"
 #include "shared/network/pframe.h"
 
-#include "server/sv_client.h"
+#include "game/server/sv_client.h"
 
 
 #define SERVER_MAX_CLIENTS 32

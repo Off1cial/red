@@ -47,5 +47,18 @@ static inline void EXIT_ERROR(const char* msg)
 }
 
 
+// Null-terminating strncpy from Quake III
+static inline void Q_strncpy(char* dst, const char* src, size_t dstsize)
+{
+  strncpy(dst, src, dstsize - 1);
+  dst[dstsize - 1] = '\0'; 
+}
 
+// Case-insensitive string compare upto n chars
+int Q_stricmpn(const char* s1, const char* s2, int n);
 
+// Case sensitive string compare to n chars
+int Q_strncmp(const char* s1, const char* s2, int n);
+
+// Case insensitive comparison of the entire string
+int Q_stricmp(const char* s1, const char* s2);

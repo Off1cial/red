@@ -141,16 +141,48 @@ static void rect_corner_all(rectdef rect, float out[4][2])
     rect_corner(rect, i, out[i]);
 }
 
-void UI_DrawRect(rectdef rect, rgba col)
+
+/*
+ Now supports textures and UVs
+ u1,v1 represent rect top left
+ u2, v2 represent rect bottom right
+ texid = -1 for no texture
+*/
+void UI_DrawRect(
+    rectdef rect, 
+    float u1, float v1,
+    float u2, float v2,
+    rgba col,
+    GLint texid)
 {
   // Upload vertices to the context batch
+  if (texid != gUIctx->activetex)
+  {
+    // Flush rendering 
+    UI_DrawBatch();
+    gUIctx->activetex = texid;
+  }
+
   uivertex_t rectv[4] = {0};
   // Do UVs in the future
-  rect_corner(rect, 0, rectv[0].pos);
-  rect_corner(rect, 1, rectv[1].pos);
-  rect_corner(rect, 2, rectv[2].pos);
-  rect_corner(rect, 3, rectv[3].pos);
-  
+  rect_corner(rect, UI_RECTCORNER_TL, rectv[UI_RECTCORNER_TL].pos);
+  rect_corner(rect, UI_RECTCORNER_BL, rectv[UI_RECTCORNER_BL].pos);
+  rect_corner(rect, UI_RECTCORNER_BR, rectv[UI_RECTCORNER_BR].pos);
+  rect_corner(rect, UI_RECTCORNER_TR, rectv[UI_RECTCORNER_TR].pos);
+
+
+  rectv[UI_RECTCORNER_TL].uv[0] = u1;
+  rectv[UI_RECTCORNER_TL].uv[1] = v1;
+
+  rectv[UI_RECTCORNER_BL].uv[0] = u1;
+  rectv[UI_RECTCORNER_BL].uv[1] = v2;
+
+  rectv[UI_RECTCORNER_BR].uv[0] = u2;
+  rectv[UI_RECTCORNER_BR].uv[1] = v2;
+
+  rectv[UI_RECTCORNER_TR].uv[0] = u2;
+  rectv[UI_RECTCORNER_TR].uv[1] = v1;
+
   for (int i = 0; i < 4; i++)
   {
     rectv[i].colour[0] = col[0] / 255.0f;
@@ -158,6 +190,8 @@ void UI_DrawRect(rectdef rect, rgba col)
     rectv[i].colour[2] = col[2] / 255.0f;
     rectv[i].colour[3] = col[3] / 255.0f;
 
+
+    // Move this to the GPU -> uniform vec2 screensize
     UI_ScreenToNDC(rectv[i].pos[0], rectv[i].pos[1], rectv[i].pos);
     //uidebug_printvert(rectv[i].pos);
     //uidebug_printcolour(rectv[i].colour);
@@ -206,10 +240,10 @@ void UI_DrawRectOutline(rectdef rect, rgba col, float thickness)
         rect[RECT_H]
     };
 
-    UI_DrawRect(top, col);
-    UI_DrawRect(bottom, col);
-    UI_DrawRect(left, col);
-    UI_DrawRect(right, col);
+    UI_DrawRect(top,    0, 0, 1, 1, col, -1);
+    UI_DrawRect(bottom, 0, 0, 1, 1, col, -1);
+    UI_DrawRect(left,   0, 0, 1, 1, col, -1);
+    UI_DrawRect(right,  0, 0, 1, 1, col, -1);
 }
 
 void UI_DrawTriangle(float v0[2], float v1[2], float v2[2], rgba colour)
@@ -293,6 +327,9 @@ void UI_DrawBatch()
       0);
 
   glBindVertexArray(0);
+
+  gUIctx->vertexcount = 0;
+  gUIctx->indexcount  = 0;
 
   glDepthMask(GL_TRUE);       // restore state for whatever draws next (next frame's 3D pass)
   glEnable(GL_DEPTH_TEST);

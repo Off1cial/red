@@ -1,4 +1,4 @@
-#include "client/client.h"
+#include "game/client/client.h"
 #include "platform/network/network.h"
 #include "shared/network/packet.h"
 #include "corebase/time.h"

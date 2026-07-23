@@ -1,4 +1,4 @@
-#include "server/server.h"
+#include "game/server/server.h"
 
 // Idea: upon connecetion, send the player index back to the client
 

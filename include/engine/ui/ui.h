@@ -117,6 +117,8 @@ typedef struct uicontext_t
   uint32_t* indices; // vao
   uint32_t indexcount, indexcapacity;
 
+  GLint activetex;
+
   // Styling
   uistyle_t style;
 

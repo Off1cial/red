@@ -25,10 +25,6 @@ static uint32_t ui_hash_id(const char* str, uint32_t seed) {
     return h;
 }
 
-#define UI_RECTCORNER_TL 0
-#define UI_RECTCORNER_BL 1
-#define UI_RECTCORNER_BR 2
-#define UI_RECTCORNER_TR 3
 
 static void ui_rectcorner(rectdef rect, int i, float out[2])
 {
@@ -199,7 +195,7 @@ uint8_t UI_Button(const char* name, rectdef rect)
   }
   //printf("Colour determined\n\t(%0.2f, %0.2f, %0.2f, %0.2f)\n",
      //colour[0], colour[1], colour[2], colour[3]);
-  UI_DrawRect(buttonrect, colour);
+  UI_DrawRect(buttonrect, 0, 0, 1, 1, colour, -1);
   win->cursor_y += buttonrect[RECT_H] + 8.0f;
 
   return clicked;
@@ -354,7 +350,11 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   // Early exit if collapsed
   if (win->collapsed)
   {
-    UI_DrawRect(titlebar, gUIctx->style.window_bg_title);
+    UI_DrawRect(
+        titlebar,
+        0, 0, 1, 1,
+        gUIctx->style.window_bg_title,
+        -1);
     return 0;
   }
 
@@ -369,13 +369,22 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
       RGBACopy(wincol, gUIctx->style.window_bg_hovered);
     else
       RGBACopy(wincol, gUIctx->style.window_bg_idle);
-    UI_DrawRect(win->rect, wincol);
+
+    UI_DrawRect(
+        win->rect,
+        0, 0, 1, 1,
+        wincol,
+        -1);
     
   }
 
   if (titlebar_h > 0.0f)
   {
-    UI_DrawRect(titlebar, gUIctx->style.window_bg_title);
+    UI_DrawRect(
+        titlebar, 
+        0, 0, 1, 1,
+        gUIctx->style.window_bg_title,
+        -1);
   }
   if (!win->collapsed)
   {
