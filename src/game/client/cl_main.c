@@ -3,17 +3,20 @@
 #include <float.h>
 
 #include "platform/window.h"
+#include "platform/cpu.h"
 #include "platform/input.h"
 
 #include "corebase/time.h"
 #include "corebase/mathlib.h"
 
+#include "engine/simd.h"
 #include "engine/shader.h"
 #include "engine/mesh.h"
 #include "engine/camera.h"
 #include "engine/ui/ui.h"
 
 #include "game/client/client.h"
+#include "game/client/cl_console.h"
 #include "shared/network/packet.h"
 
 // cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
@@ -24,6 +27,14 @@
 
 
 // test triangle
+
+void ASM_ADDTEST(float* dst, float* a, float* b, int count)
+{
+  for (int i = 0; i < count; i++)
+  {
+    dst[i] = a[i] + b[i];
+  }
+}
 
 const gpuVertex v0 = {
   .xyz = {-0.5, -0.5, 0.5},
@@ -76,10 +87,10 @@ void CL_Loop(client_t* client, double dt)
 
 int main()
 {
-
-  char msg_disconnect[] = "Chode";
-  size_t msg_disconnect_len = strlen(msg_disconnect);
   printf("Hello world\n");
+  
+  cpufeatures_t feat = pltCPU_GetFeatures();
+  pltCPU_PrintFeatures(feat);
 
   pltWindow* win = PlatformWindow_Create(640,480, "RED");
   gPltWindow = win; // clean this up later
@@ -104,6 +115,8 @@ int main()
 
   glViewport(0,0, win->winw, win->winh);
 
+  char msg_disconnect[] = "Chode";
+  size_t msg_disconnect_len = strlen(msg_disconnect);
 
   client = malloc(sizeof(client_t));
   CL_Init(client, "redw0od0");
@@ -117,6 +130,8 @@ int main()
   //CL_SendPacketUDP(client, &connectpacket);
 
 
+
+
   netpacket_t testpacket = {0};
   testpacket.type = 99;
   testpacket.sequence = 0;
@@ -124,6 +139,7 @@ int main()
   int len = strlen(str);
   testpacket.size = len;
   strcpy(testpacket.data, str);
+ 
 
 
   double timestamp = pltTime_Time();
@@ -172,6 +188,8 @@ int main()
       }
     }
     UI_End();
+
+    Console_Draw();
 
     Camera_Look(camera, input->mxrel, input->myrel, 0.8f);
 

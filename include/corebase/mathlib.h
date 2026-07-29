@@ -122,6 +122,13 @@ static inline float VectorLength(const vec3_t v)
   return sqrtf(VectorLength2(v));
 }
 
+static inline float VectorDistance(const vec3_t a, const vec3_t b)
+{
+  vec3_t diff;
+  VectorSub(a, b, diff);
+  return VectorLength(diff);
+}
+
 static inline float VectorNormalise(
     const vec3_t v,
     vec3_t out)

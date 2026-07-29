@@ -2,6 +2,7 @@
 #include <netdb.h>
 #include <pthread.h>
 #include "game/server/server.h"
+#include "platform/cpu.h"
 #include "corebase/time.h"
 
 void SV_Close(server_t* server)
@@ -29,6 +30,7 @@ void* thread_test()
 int main()
 {
   server = malloc(sizeof(server_t));
+  cpufeatures_t cpufeat = pltCPU_GetFeatures();
   pltTime_Init();
   
   int serverresult = SV_Init

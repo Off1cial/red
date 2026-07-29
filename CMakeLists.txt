@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(red VERSION 1.0 LANGUAGES C CXX)
+project(red VERSION 1.0 LANGUAGES C CXX ASM_NASM)
+set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 
 add_compile_definitions(_POSIX_C_SOURCE=200112L)
 
@@ -21,6 +22,9 @@ file(GLOB_RECURSE SOURCE_SHARED
     src/corebase/*.cpp
     src/shared/network/*.c
     src/shared/network/*.cpp
+    src/platform/cpu.c
+    src/engine/*.asm
+
 )
 
 # -------------------------
@@ -184,9 +188,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT WIN32)
     foreach(target client server)
 
         target_compile_options(${target} PRIVATE
-            -fsanitize=address
-            -fno-omit-frame-pointer
-            -g
+            $<$<COMPILE_LANGUAGE:C,CXX>:
+                -fsanitize=address
+                -fno-omit-frame-pointer
+                -g
+            >
         )
 
         target_link_options(${target} PRIVATE
