@@ -7,6 +7,7 @@
 
 typedef enum netpacktype_t
 {
+  NET_PACKET_CHALLENGE,
   NET_PACKET_CONNECT,
   NET_PACKET_DISCONNECT,
   NET_PACKET_ACCEPT,

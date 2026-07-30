@@ -2,7 +2,8 @@
 
 #include <glad/glad.h>
 #include <assert.h>
-#include "corebase/vectors.h"
+//#include "corebase/vectors.h"
+#include "corebase/mathlib.h"
 
 // TODO: Cache shader uniform locations
 
@@ -22,12 +23,16 @@ typedef enum CBASE_SHADER_LOC_TYPE
 
 
   // Booleans/ints
-  SH_UNIFORM_USE_TEXUTRE,
+  SH_UNIFORM_USE_TEXTURE,
   SH_UNIFORM_USE_VERTEXCOL,
   SH_UNIFORM_USE_NORMALS,
 
   // Other uniforms ...
 
+  // UI
+  SH_UNIFORM_UI_RECTSIZE, // Width and height
+  SH_UNIFORM_UI_RECTPOS, // Centre position
+  SH_UNIFORM_UI_ROUNDING,
   
 
   SH_UNIFORM_COUNT // Not a uniform - counter, must be last
@@ -60,3 +65,10 @@ CBaseShader*  CBaseShader_Create        (const char* vert, const char* frag);
 
 
 void          CBaseShader_SetMat4( CBaseShader* shader, CBaseShaderLocType loctype, mat4 m);
+
+void CBaseShader_SetVec2(CBaseShader* shader, CBaseShaderLocType loctype, float vec2[2]);
+
+void CBaseShader_SetInt(CBaseShader* shader, CBaseShaderLocType loctype, int data);
+
+void CBaseShader_SetFloat(CBaseShader* shader, CBaseShaderLocType loctype, float f);
+

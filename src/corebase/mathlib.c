@@ -1,30 +1,17 @@
 #include "corebase/mathlib.h"
-#include <math.h>
 
-/*
 
-double VectorLength(vec3_t v)
-{
-  return sqrt(VectorLength2(v));
-}
+vec3_t VEC_AXIS_X = {1, 0, 0}; 
+vec3_t VEC_AXIS_Y = {0, 1, 0};
+vec3_t VEC_AXIS_Z = {0, 0, 1};
 
-double VectorNormalise(vec3_t v, vec3_t out)
-{
-  double mag = VectorLength(v);
-  if (mag)
-  {
-    double imag = 1.0f / mag;
-    out[0] = v[0] * imag;
-    out[1] = v[1] * imag;
-    out[2] = v[2] * imag;
-  }
-  return mag;
-}
 
-void VectorCrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
-	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
-	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
-	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
-}
+vec3_t VEC_AXIS_X_NEG = {-1, 0, 0};
+vec3_t VEC_AXIS_Y_NEG = {0, -1, 0};
+vec3_t VEC_AXIS_Z_NEG = {0, 0, -1};
 
-*/
+vec3_t VEC_ZERO = {0,0,0};
+
+mat4 MAT4_IDENTITY;
+
+

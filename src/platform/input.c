@@ -26,7 +26,8 @@ void PlatformInput_Destroy(pltInput* input)
 }
 
 
-void PlatformInput_Poll(pltInput* input, int* quit)
+
+void PlatformInput_Poll(SDL_Window* window, pltInput* input, int* quit)
 {
   input->eventWindowResized = 0;
   
@@ -50,15 +51,23 @@ void PlatformInput_Poll(pltInput* input, int* quit)
   }
 
   const bool* keys = SDL_GetKeyboardState(NULL);
-  SDL_MouseButtonFlags m_abs = SDL_GetMouseState(&input->mx, &input->my);
-  SDL_MouseButtonFlags m_rel = SDL_GetRelativeMouseState(&input->mxrel, &input->myrel);
+
+  SDL_MouseButtonFlags mdata;
+
+  if (input->mouselocked)
+  {
+    mdata = SDL_GetRelativeMouseState(&input->mxrel, &input->myrel);
+  }else
+  {
+    mdata = SDL_GetMouseState(&input->mx, &input->my);
+  }
   
   memcpy(input->mPrevious, input->mCurrent, sizeof(input->mCurrent));
-  input->mCurrent[0] = (m_abs & SDL_BUTTON_LMASK) != 0;
-  input->mCurrent[1] = (m_abs & SDL_BUTTON_RMASK) != 0;
-  input->mCurrent[2] = (m_abs & SDL_BUTTON_MMASK) != 0;
-  input->mCurrent[3] = (m_abs & SDL_BUTTON_X1MASK) != 0;
-  input->mCurrent[4] = (m_abs & SDL_BUTTON_X2MASK) != 0;
+  input->mCurrent[0] = (mdata & SDL_BUTTON_LMASK) != 0;
+  input->mCurrent[1] = (mdata & SDL_BUTTON_RMASK) != 0;
+  input->mCurrent[2] = (mdata & SDL_BUTTON_MMASK) != 0;
+  input->mCurrent[3] = (mdata & SDL_BUTTON_X1MASK) != 0;
+  input->mCurrent[4] = (mdata & SDL_BUTTON_X2MASK) != 0;
 
   memcpy(input->kPrevious, input->kCurrent, sizeof(input->kCurrent));
   memcpy(input->kCurrent, keys, SDL_SCANCODE_COUNT);
@@ -69,7 +78,8 @@ void PlatformInput_Poll(pltInput* input, int* quit)
     input->released[i] = !input->kCurrent[i] && input->kPrevious[i]; 
   }
 
-
+  if (input->pressed[SDL_SCANCODE_ESCAPE])
+    pltInput_ToggleMouseLock(input, window);
 
 }
 

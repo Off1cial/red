@@ -55,8 +55,8 @@ void CBaseMesh_PushTriangleVerts(
 #define CBaseMesh_PushTriangle(mesh, a, b, c) \
   _Generic((a),                   \
     gpuVertex: CBaseMesh_PushTriangleVerts, \
-    GLuint:    CBaseMesh_PushTriangleIndices \
-    unsigned int: CBaseMesh_PushTriangleIndices \
+    GLuint:    CBaseMesh_PushTriangleIndices, \
+    GLuint: CBaseMesh_PushTriangleIndices \
   )(mesh, a, b, c)
 
 
