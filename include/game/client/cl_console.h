@@ -10,6 +10,7 @@ typedef struct console_s
   uint16_t text[CONSOLE_TEXTLENGTH]; // NOTE 1
   int currentline; // Line number for the next print
   int linecount;
+  int linewidth;
   
   rectdef rect;
 

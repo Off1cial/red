@@ -34,5 +34,6 @@ void SSE_FloatsAdd(
     );
 
 
+int SIMDVEC3_Add(simdvec3_t* out, simdvec3_t* a, simdvec3_t* b, int count);
 
-
+int SIMDVEC3_Integrate(simdvec3_t* out, simdvec3_t* a, simdvec3_t* b, float m, int count);

@@ -117,3 +117,28 @@ void Physbody_AddForce(CBasePhysBodies* arr, uint32_t body, vec3_t force)
   arr->acceleration.y[body] += force[1] * invmass;
   arr->acceleration.z[body] += force[2] * invmass;
 }
+
+static void physbody_updatevelocity(CBasePhysBodies* arr, float dt)
+{
+  if (!arr)
+    return;
+
+  SIMDVEC3_Integrate(&arr->velocity, &arr->velocity, &arr->acceleration, dt, arr->count);
+}
+
+static void physbody_updateposition(CBasePhysBodies* arr, float dt)
+{
+  simdvec3_t posdelta;
+  SIMDVEC3_Integrate(&arr->origin, &arr->origin, &arr->velocity, dt, arr->count);
+
+}
+
+
+void CBasePhysBodies_Update(CBasePhysBodies* arr, float dt)
+{
+  if (!arr)
+    return;
+
+  physbody_updatevelocity(arr, dt);
+  physbody_updateposition(arr, dt);
+}

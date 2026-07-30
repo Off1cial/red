@@ -1,16 +1,76 @@
-global AVX_Add
+global AVX_AddArrays
 global AVX_Integrate
 global AVX_IntegrateFMA3
 
+global AVX_Add
+
+; TODO : Add tailing to finish the remaining < 4 values to avoid the C cleanup
+
 section .text
   
+AVX_Add:
+; rdi = dst
+; rsi = a
+; xmm0 = val
+; rdx = count
+; I think?
+  vbroadcastss ymm0, xmm0 ; Fill ymm0 with val
+  .avxloop:
+    cmp rdx, 0x8
+    jl .sseloop
+
+    vmovups ymm1, [rsi] ; mov a into ymm1
+    vaddps ymm1, ymm1, ymm0 ; a = a + val
+
+    vmovups [rdi], ymm1 ; mov a into dst
+    
+    ; advance 32 bytes (8 floats, 8 x 4 = 32)
+    add rsi, 0x20
+    add rdi, 0x20
+    sub rdx, 0x8
+    ; Do i need to advance ymm0 or xmm0?
+    jmp .avxloop
+
+  .sseloop: ; Same as above but with just 4 floats
+    cmp rdx, 0x4
+    jl .done
+
+    movups xmm1, [rsi]
+    addps xmm1, xmm0
+    movups [rdi], xmm1
+
+    ; advance 16 bytes
+    add rsi, 0x10
+    add rdi, 0x10
+    sub rdx, 0x4
+    jmp .sseloop
+  
+  ; Linear finish
+  .tail:
+    test rdx, rdx
+    jz .done
+
+    movss xmm1, [rsi]
+    addss xmm1, xmm0
+    movss [rdi], xmm1
+
+    ; advance
+    add rsi, 0x4
+    add rdi, 0x4
+    dec rdx
+    jmp .tail
+
+  .done
+    vzeroupper
+    mov rax, rdx
+    ret
+
+
+AVX_AddArrays:
 ; rdi = dst
 ; rsi = a
 ; rdx = b
 ; rcx = count
-
-
-AVX_Add:
   
   .avxloop:
     cmp rcx, 0x8
@@ -34,7 +94,6 @@ AVX_Add:
     jmp .avxloop
 
   .sseloop:
-    vzeroupper ; Maybe not call this every iteration, but this should be called just once anyway
     cmp rcx, 0x4
     jl .done
     
@@ -52,8 +111,24 @@ AVX_Add:
     sub rcx, 0x4
 
     jmp .sseloop
+  
+  .tail:
+    test rcx, rcx
+    jz .done
 
+    movss xmm0, [rsi]
+    movss xmm1, [rdx]
 
+    addss xmm0, xmm1
+    movss [rdi], xmm0
+
+    ;advance
+    add rsi, 0x4
+    add rdx, 0x4
+    add rdi, 0x4
+    dec rcx
+    jmp .tail
+  
 
   .done:
     vzeroupper
@@ -88,7 +163,6 @@ AVX_Integrate:
     jmp .avxloop
 
   .sseloop: ; Integrate 4 floats
-    vzeroupper
     cmp rcx, 0x4
     jl .done
 
@@ -143,7 +217,6 @@ AVX_IntegrateFMA3:
     jmp .avxloop
 
   .sseloop:
-    vzeroupper
     cmp rcx, 0x4
     jl .done
 
