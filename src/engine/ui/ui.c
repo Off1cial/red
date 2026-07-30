@@ -26,7 +26,7 @@ uint8_t UI_Init()
   if (!gUIctx->vertices || !gUIctx->indices)
     return 0;
 
-
+  gUIctx->textbatch_count = 0;
   // Style
   // Perhaps pull colours from a file?
 

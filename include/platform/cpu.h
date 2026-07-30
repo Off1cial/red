@@ -16,6 +16,7 @@ typedef struct
 
 } cpufeatures_t;
 
+extern cpufeatures_t* gPltCPUFeatures;
 
-cpufeatures_t pltCPU_GetFeatures(void);
-void pltCPU_PrintFeatures(cpufeatures_t feat);
+void pltCPU_GetFeatures(void);
+void pltCPU_PrintFeatures(void);

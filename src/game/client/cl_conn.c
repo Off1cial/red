@@ -12,27 +12,8 @@ static void closesocket(netsocket_t* socket)
   *socket = -1;
 }
 
-int CL_SendConnectPacket(client_t* client)
-{
-  netpacket_t packet = {0};
 
-  packet.type = NET_PACKET_CONNECT;
-
-  strncpy(
-        packet.data,
-        client->name,
-        sizeof(packet.data) - 1
-  );
-
-  return CL_SendPacketUDP(client, &packet);
-}
-
-static void clientsetaddr(
-    struct sockaddr_in* addr,
-    netdomain_t domain,
-    const char* ip,
-    short int port
-)
+static void clientsetaddr(struct sockaddr_in* addr, netdomain_t domain, const char* ip, short int port)
 {
   memset(addr, 0, sizeof(struct sockaddr_in));
 
@@ -41,7 +22,22 @@ static void clientsetaddr(
   addr->sin_addr.s_addr = inet_addr(ip);
 }
 
+int CL_SendChallengePacket(client_t* client)
+{
+  netpacket_t packet = {0};
 
+  packet.type = NET_PACKET_CHALLENGE;
+
+  strncpy(
+        packet.data,
+        client->name,
+        sizeof(packet.data) - 1
+  );
+  return CL_SendPacketUDP(client, &packet);
+}
+
+
+// Simply forms connection between client and server
 int CL_Connect(
     client_t* client,
     const char* ip,
@@ -117,6 +113,8 @@ int CL_Connect(
    *   send()/recv() can be used instead of
    *   sendto()/recvfrom().
    */
+  client->state = CSTATE_CONNECTING;
+
   int conresult = connect(
       *socket,
       (struct sockaddr*)addr,
@@ -133,14 +131,14 @@ int CL_Connect(
   }
 
   printf(
-      "[CLIENT]: Connecting to %s:%d (%s)\n",
+      "[CLIENT]: Connection formed with %s:%d (%s)\n",
       ip,
       port,
       protocol == NET_PROTOCOL_TCP ? "TCP" : "UDP"
   );
   
-  client->state = CSTATE_CONNECTING;
-  CL_SendConnectPacket(client);
+  client->state = CSTATE_CONNECTED;
+  //CL_SendChallengePacket(client);
 
   return CLIENT_SUCCESS;
 }
@@ -150,9 +148,9 @@ int CL_Disconnect(client_t* client)
 {
   if (!client)
     return CLIENT_FAILURE;
-
-  if (client->state != CSTATE_CONNECTED)
-    return CLIENT_FAILURE;
+  
+  if (client->state == CSTATE_EMPTY)
+    return CLIENT_SUCCESS;
 
 
   /*
@@ -196,54 +194,21 @@ int CL_GameServerJoin(
     int retries
 )
 {
-  /*
-  double time_attemptdelay = 2.0f;
-  double time_attemptlast; 
-  int attempts_made = 0;
-
-  double time_start = pltTime_Time();
-  time_attemptlast = time_start;
-
-  while (attempts_made < retries)
-  {
-
-    if (client->state == CSTATE_CONNECTED)
-      goto connected; 
-    double time = pltTime_Time();
-    if (time - time_attemptlast >= time_attemptdelay)
-    {
-      attempts_made++;
-      time_attemptlast = time;
-      int conresult = CL_Connect(client, ip, port, protocol);
-      if (conresult == CLIENT_FAILURE )
-        continue;
-
-      int presult = CL_SendConnectPacket(client);
-      if (presult == CLIENT_FAILURE)
-        continue;
-
-    }
-  }
-  
-  printf("[CLIENT]: Connection failed after %d retries\n", retries);
-  return CLIENT_FAILURE;
-
-connected:
-  printf("[CLIENT]: Successfully joined game server!");
-  return CLIENT_SUCCESS;
-
-  */
-
   client->state = CSTATE_CONNECTING;
-
   client->connect_attempts = 0;
   client->connect_maxattempts = retries;
-  
   client->time_lastconnectattempt = pltTime_Time();
 
   if (client->socket_udp == -1)
-    CL_Connect(client, ip, port, protocol);
-  CL_SendConnectPacket(client);
+  {
+
+    int conresult = CL_Connect(client, ip, port, protocol);
+    if (conresult != CLIENT_SUCCESS)
+    {
+      return CLIENT_FAILURE;
+    }
+  }
+  CL_SendChallengePacket(client);
 
   return CLIENT_SUCCESS;
 }
@@ -253,17 +218,19 @@ int CL_GameServerDisconnect(client_t* client, char* msg, size_t msglen)
   if (!client)
     return CLIENT_FAILURE;
 
+  /*
   if (client->state != CSTATE_CONNECTED)
     return CLIENT_FAILURE;
+  */
+
+  if (client->state == CSTATE_EMPTY)
+    return CLIENT_SUCCESS;
   
-  char pdata[NET_PACKET_SIZE];
-  size_t n = strlen(client->name) + msglen;
-  snprintf(pdata, n, "%s: %s", client->name, msg);
 
   netpacket_t discpacket = NetPacket_Prepare(
       NET_PACKET_DISCONNECT,
-      pdata,
-      strlen(pdata)
+      msg,
+      strlen(msg)
       );
   
   CL_SendPacketUDP(client, &discpacket);

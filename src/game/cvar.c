@@ -1,10 +1,6 @@
 #include "game/cvar.h"
 #include "platform/common.h"
-
-#ifndef SEED_PLACEHOLDER
-#define SEED_PLACEHOLDER 0
-#endif
-
+#include "engine/hash.h"
 
 #define HASH_BUCKET_COUNT 256
 
@@ -13,91 +9,74 @@ int    cvar_numIndexes;
 
 static cvar_t* cvarHashTable[HASH_BUCKET_COUNT];
 
-
-static inline uint64_t cvar_hash(const char* name, uint64_t seed)
-{
-  uint32_t h = seed ? seed : 2166136261u;
-  while (*name) { h ^= (uint8_t)*name++; h *= 16777619u; }
-  return h;
-}
-
-
 static cvar_t* Cvar_Find(const char* name)
 {
-  uint64_t hash;
-  cvar_t* var;
+    uint32_t bucket = Hash_Bucket(Hash_String(name), HASH_BUCKET_COUNT);
 
-  hash = cvar_hash(name, SEED_PLACEHOLDER);
-
-  for (var=cvarHashTable[hash]; var; var=var->hashNext)
-  {
-    if (!Q_stricmp(var->name, name))
+    for (cvar_t* var = cvarHashTable[bucket]; var; var = var->hashNext)
     {
-      return var;
+        if (!Q_stricmp(var->name, name))
+            return var;
     }
-  }
-  return NULL;
+    return NULL;
 }
 
 void Cvar_Register(const char* name, const char* defaultValue, uint64_t flags)
 {
-  // Does the Cvar already exist
-  cvar_t* cv;
+    if (Cvar_Find(name))
+        return;
 
-  cv = Cvar_Find(name);
-  if (!cv)
-    return;
-  
-  // Cvar is new
-  uint64_t hash;
-  cv = &cvar_indexes[cvar_numIndexes++];
-  Q_strncpy(cv->name, name, strlen(name));
-  Q_strncpy(cv->string, defaultValue, strlen(defaultValue));
-  cv->value = atof(cv->string);
-  cv->value_int = atoi(cv->string);
-  cv->flags = flags;
+    if (cvar_numIndexes >= CVAR_MAXCVARS)
+    {
+        printf("[CVAR]: cvar_indexes full, cannot register '%s'\n", name);
+        return;
+    }
 
-  hash = cvar_hash(name, SEED_PLACEHOLDER); 
-  cv->hashNext = cvarHashTable[hash];
+    cvar_t* cv = &cvar_indexes[cvar_numIndexes++];
+    memset(cv, 0, sizeof(cvar_t));
 
-  
+    // Q_strncpy(dst, src, strlen(src)) never null-terminates unless dst
+    // happens to already be zeroed AND src is shorter than dst's capacity.
+    // Size off the DESTINATION buffer, and terminate explicitly.
+    size_t namelen = strlen(name);
+    if (namelen >= sizeof(cv->name)) namelen = sizeof(cv->name) - 1;
+    memcpy(cv->name, name, namelen);
+    cv->name[namelen] = '\0';
 
-  cvarHashTable[hash] = cv;
+    size_t vallen = strlen(defaultValue);
+    if (vallen >= sizeof(cv->string)) vallen = sizeof(cv->string) - 1;
+    memcpy(cv->string, defaultValue, vallen);
+    cv->string[vallen] = '\0';
+
+    cv->value = atof(cv->string);
+    cv->value_int = atoi(cv->string);
+    cv->flags = flags;
+
+    uint32_t bucket = Hash_Bucket(Hash_String(name), HASH_BUCKET_COUNT);
+    cv->hashNext = cvarHashTable[bucket];
+    cvarHashTable[bucket] = cv;
 }
 
-
-char* Cvar_ValueString(const char* name)
+const char* Cvar_ValueString(const char* name)
 {
-  cvar_t* cv;
-  cv = Cvar_Find(name);
-  if (!cv)
-    return "";
-
-  return cv->name;
+    cvar_t* cv = Cvar_Find(name);
+    if (!cv) return "";
+    return cv->string;
 }
 
 float Cvar_ValueFloat(const char* name)
 {
-  cvar_t* cv;
-  cv = Cvar_Find(name);
-  if (!cv)
-    return 0.0f;
-
-  return cv->value;
+    cvar_t* cv = Cvar_Find(name);
+    return cv ? cv->value : 0.0f;
 }
 
 int Cvar_ValueInteger(const char* name)
 {
-  cvar_t* cv;
-  cv = Cvar_Find(name);
-  if (!cv)
-    return 0;
-  
-  return cv->value_int;
+    cvar_t* cv = Cvar_Find(name);
+    return cv ? cv->value_int : 0;
 }
-
 
 void Cvar_InitAll()
 {
-  Cvar_Register("sensitivity", "1.0", CVAR_ARCHIVE | CVAR_CLIENT);
+    Cvar_Register("sensitivity", "1.0", CVAR_ARCHIVE | CVAR_CLIENT);
 }

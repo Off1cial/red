@@ -92,6 +92,9 @@ AVX_Integrate:
     cmp rcx, 0x4
     jl .done
 
+    movups xmm1, [rsi]
+    movups xmm2, [rdx]
+
     mulps xmm2, xmm0
     addps xmm1, xmm2
 

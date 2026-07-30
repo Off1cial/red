@@ -102,3 +102,18 @@ uint32_t CBasePhysBodies_Create(
   arr->count++;
   return i;
 }
+
+
+
+
+void Physbody_AddForce(CBasePhysBodies* arr, uint32_t body, vec3_t force)
+{
+  // F = ma, a = F/m = F * ( 1.0f / m )
+  if (body >= arr->count)
+    return;
+  
+  float invmass = arr->invmass[body];
+  arr->acceleration.x[body] += force[0] * invmass;
+  arr->acceleration.y[body] += force[1] * invmass;
+  arr->acceleration.z[body] += force[2] * invmass;
+}

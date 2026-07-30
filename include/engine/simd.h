@@ -13,17 +13,17 @@ typedef struct SIMDARR_vec3
   float *z;
 
   size_t count;
-} simdarr_vec3_t;
+} simdvec3_t;
 
-simdarr_vec3_t SIMDVEC3_New(size_t count);
-void           SIMDVEC3_Free(simdarr_vec3_t* v);
+simdvec3_t SIMDVEC3_New(size_t count);
+void           SIMDVEC3_Free(simdvec3_t* v);
 
 
 // Automatically
 void SIMD_Vec3Add(
-    simdarr_vec3_t* dst, 
-    simdarr_vec3_t* a,
-    simdarr_vec3_t* b,
+    simdvec3_t* dst, 
+    simdvec3_t* a,
+    simdvec3_t* b,
     size_t count);
 
 void SSE_FloatsAdd(
@@ -34,9 +34,5 @@ void SSE_FloatsAdd(
     );
 
 
-// Returns the number of remaining floats to be worked on sequentially
-int AVX_Add(float* dst, float* a, float* b, int count);
-int AVX_IntegrateFMA3(float* dst, float* a, float* b, float m, int count);
-int AVX_Integrate(float* dst, float* a, float* b, float m, int count);
 
 

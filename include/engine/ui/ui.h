@@ -4,6 +4,7 @@
 #include "engine/shader.h"
 #include "engine/ui/ui_colours.h"
 #include "platform/input.h"
+#include "engine/mesh.h"
 
 typedef struct uivertex_t
 {
@@ -88,6 +89,19 @@ typedef struct uiwindow_t
 } uiwindow_t;
 
 
+typedef struct ui_textbatch_t
+{
+  uint32_t font;
+  uivertex_t* vertices; // vbo
+  uint32_t vertexcount, vertexcapacity;
+  GLuint vao, vbo, ebo;
+  //CBaseShader* shader;
+
+  uint32_t* indices; // vao
+  uint32_t indexcount, indexcapacity;
+
+} ui_textbatch_t;
+
 typedef struct uicontext_t
 {
   // State
@@ -109,6 +123,9 @@ typedef struct uicontext_t
   uint8_t hotwindow;
 
   // Draw buffer
+  ui_textbatch_t textbatches[8]; // random ass number for now, should match font count
+  uint32_t textbatch_count;
+
   uivertex_t* vertices; // vbo
   uint32_t vertexcount, vertexcapacity;
   GLuint vao, vbo, ebo;
@@ -129,6 +146,7 @@ extern uicontext_t* gUIctx;
 uint8_t UI_Init();
 
 // ui_draw.c
+void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, vec4_t colour);
 
 // Upload data to GPU
 void UI_DrawBatch(); 

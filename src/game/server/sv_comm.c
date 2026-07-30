@@ -57,8 +57,8 @@ int SV_ReceivePacketUDP(server_t* server)
     svclient_t* client = SV_FindClientUDP(server, &from);
     switch (packet.type)
     {
-      case NET_PACKET_CONNECT:
-        printf("[SERVER]: UDP Connection packet received\n");
+      case NET_PACKET_CHALLENGE:
+        printf("[SERVER][CHALLENGE]: UDP Challege packet received\n");
         printf("  Client: %s\n", packet.data);
   
         int client_id;

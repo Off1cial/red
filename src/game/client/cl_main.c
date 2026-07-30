@@ -14,6 +14,7 @@
 #include "engine/mesh.h"
 #include "engine/camera.h"
 #include "engine/ui/ui.h"
+#include "engine/assetmanager.h"
 
 #include "game/client/client.h"
 #include "game/client/cl_console.h"
@@ -59,8 +60,9 @@ void CL_Loop(client_t* client, double dt)
   if (client->socket_udp != -1)
     CL_ReceivePacketUDP(client);
 
-  if (client->state == CSTATE_CONNECTING)
+  if (client->state == CSTATE_CONNECTED)
   {
+    // Attempt to join server
     double now = pltTime_Time();
     if (now - client->time_lastconnectattempt > 2.0f)
     {
@@ -69,7 +71,7 @@ void CL_Loop(client_t* client, double dt)
         printf("[CLIENT]: Connection failed after %d retries\n",
             client->connect_attempts);
         client->connect_attempts = 0;
-        client->state = CSTATE_DISCONNECTED;
+        CL_Disconnect(client);
         return;
       }
       // Retry connection
@@ -78,7 +80,7 @@ void CL_Loop(client_t* client, double dt)
       
       client->connect_attempts++;
       client->time_lastconnectattempt = now;
-      CL_SendConnectPacket(client);
+      CL_SendChallengePacket(client);
     }
   }
 
@@ -88,9 +90,10 @@ void CL_Loop(client_t* client, double dt)
 int main()
 {
   printf("Hello world\n");
-  
-  cpufeatures_t feat = pltCPU_GetFeatures();
-  pltCPU_PrintFeatures(feat);
+  cpufeatures_t cpufeat;
+  gPltCPUFeatures = &cpufeat;
+  pltCPU_GetFeatures();
+  pltCPU_PrintFeatures();
 
   pltWindow* win = PlatformWindow_Create(640,480, "RED");
   gPltWindow = win; // clean this up later
@@ -100,6 +103,8 @@ int main()
 
   pltTime_Init();
 
+  TTF_Init();
+  AssetManager_Init();
   UI_Init();
   
   CBaseShader* shadertest = CBaseShader_Create("../Assets/Shaders/vert_test.vs", "../Assets/Shaders/frag_test.fs");
@@ -173,11 +178,13 @@ int main()
       );
     }
     
-    rectdef rect = {40,40,200,100};
+    rectdef rect = {40,40,100,50};
     rectdef windowrect = {20, 20, 400, 200};
     rectdef win2; 
     UIRECT_NULL(win2);
-
+    UIRECT_NULL(rect);
+    vec4_t texcol = {255, 255, 0, 255};
+    UI_AddText("COCK", 0, 0, 0, texcol);
     if (UI_Begin("Window", windowrect, 0))
     {
       if (UI_Button("Button", rect))
@@ -185,6 +192,10 @@ int main()
         printf("Clicked\n");
         if (client->state != CSTATE_CONNECTED)
           CL_GameServerJoin(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP, 2);
+      }
+      if (UI_Button("Disconnect", rect))
+      {
+        CL_GameServerDisconnect(client, "Im leaving", 10);
       }
     }
     UI_End();

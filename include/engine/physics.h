@@ -8,13 +8,13 @@
 // Server side data, the client can just store positions?
 typedef struct PHYS_SIMD_BODIES
 {
-  simdarr_vec3_t origin;
-  simdarr_vec3_t velocity;
-  simdarr_vec3_t acceleration;
+  simdvec3_t origin;
+  simdvec3_t velocity;
+  simdvec3_t acceleration;
 
   // Collision
-  simdarr_vec3_t aabb_min;
-  simdarr_vec3_t aabb_max;
+  simdvec3_t aabb_min;
+  simdvec3_t aabb_max;
   // hulls?
   float* invmass;
 

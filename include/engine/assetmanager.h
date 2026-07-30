@@ -2,16 +2,18 @@
 #include <stdint.h>
 
 #include <glad/glad.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include "engine/shader.h"
 #include "engine/mesh.h"
 
 #define ASSETS_MAX_TEXTURES 256
 #define ASSETS_MAX_MATERIALS 512
 #define ASSETS_MAX_SHADERS 64
+#define ASSETS_MAX_FONT_GLYPHS 128
 #define ASSETS_MAX_FONTS 64
+#define ASSETS_FONT_HASH_BUCKETS 64
 
-
-typedef enum 
+typedef enum
 {
   ASSET_UNLOADED,
   ASSET_LOADING,
@@ -29,7 +31,7 @@ typedef struct assetTexture_t
 {
   char path[256];
   assethandle_t handle;
-  GLuint texid; // OpenGL index
+  GLuint texid;
   int width, height;
   assetstate_t state;
 } assetTexture_t;
@@ -46,11 +48,9 @@ typedef struct assetMaterial_t
   assethandle_t handle;
   assetstate_t state;
 
-
   assethandle_t shader;
   assethandle_t albedo;
   assethandle_t normal;
-
 } assetMaterial_t;
 
 struct _materialregistry
@@ -63,7 +63,7 @@ typedef struct assetShader_t
 {
   char path[256];
   assethandle_t handle;
-  CBaseShader* shader; // Program, uniforms
+  CBaseShader *shader;
   assetstate_t state;
 } assetShader_t;
 
@@ -82,11 +82,11 @@ struct _fontglyph
   int w, h;
 };
 
-struct assetFont_t
+typedef struct assetFont_t
 {
   char path[256];
   assetstate_t state;
-  struct _fontglyph glyphs[128];
+  struct _fontglyph glyphs[ASSETS_MAX_FONT_GLYPHS];
   assethandle_t handle;
   int tex_index;
   int size;
@@ -94,8 +94,8 @@ struct assetFont_t
   int ascent;
 
   uint32_t hash;
-  struct assetFont_t* next;
-};
+  struct assetFont_t *next; // hash bucket chain, see fontHashTable
+} assetFont_t;
 
 struct _fontregistry
 {
@@ -103,13 +103,10 @@ struct _fontregistry
   uint32_t count;
 };
 
-
-
 typedef struct assetMesh_t
 {
-  gpuVertex* vertices; 
+  gpuVertex *vertices;
   size_t vertexcount;
-
 } assetMesh_t;
 
 typedef struct AssetManager
@@ -119,11 +116,27 @@ typedef struct AssetManager
   struct _materialregistry materials;
   struct _fontregistry fonts;
 
+  assetFont_t *fontHashTable[ASSETS_FONT_HASH_BUCKETS];
 } CBaseAssetManager;
 
+extern CBaseAssetManager *gAssetManager;
 
-extern CBaseAssetManager* gAssetManager;
+uint8_t AssetManager_AddFont(const char *path, int size);
+uint32_t AssetManager_AddTexture(const char *path);
+uint32_t AssetManager_GetFontID(const char *name);
 
+uint8_t AssetManager_Init();
 
-uint8_t AssetManager_AddFont(const char* path, int size);
-uint8_t AssetManager_AddTexture(const char* path);
+static inline assetFont_t *AssetManager_GetFont(uint32_t fontid)
+{
+  if (fontid >= gAssetManager->fonts.count)
+    return NULL;
+  return &gAssetManager->fonts.fonts[fontid];
+}
+
+static inline assetTexture_t *AssetManager_GetTexture(uint32_t textureid)
+{
+  if (textureid >= gAssetManager->textures.count)
+    return NULL;
+  return &gAssetManager->textures.tex[textureid];
+}

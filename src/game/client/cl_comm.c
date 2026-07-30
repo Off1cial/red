@@ -67,7 +67,7 @@ int CL_ReceivePacketUDP(client_t* client)
       printf("[CLIENT]: Server accepted connection!\n  Index: %d\n", index);
 
       client->serverslot = index;
-      client->state = CSTATE_CONNECTED;
+      client->state = CSTATE_JOINING;
       break;
     case NET_PACKET_DISCONNECT:
       // Server sent a DC packet

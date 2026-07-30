@@ -6,19 +6,18 @@ in vec4 vCol;
 
 out vec4 FragColour;
 
-uniform float uRounding;
-uniform vec2 uRectPos;
-uniform vec2 uRectSize;
-
-float roundingSDF(vec2 centre, vec2 size, float radius)
-{
-  return length(max( abs(centre)-size+radius, 0.0)) - radius;
-}
+uniform sampler2D uTexture;
+uniform int uUseTexture; // 0 = solid colour (rects), 1 = sample atlas (text)
 
 void main()
 {
-
-
-  FragColour = vCol;
+    if (uUseTexture == 1)
+    {
+        float coverage = texture(uTexture, vUV).a; // glyph coverage from alpha channel
+        FragColour = vec4(vCol.rgb, vCol.a * coverage);
+    }
+    else
+    {
+        FragColour = vCol;
+    }
 }
-

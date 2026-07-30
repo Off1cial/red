@@ -30,7 +30,9 @@ void* thread_test()
 int main()
 {
   server = malloc(sizeof(server_t));
-  cpufeatures_t cpufeat = pltCPU_GetFeatures();
+  cpufeatures_t cpufeat;
+  gPltCPUFeatures = &cpufeat;
+  pltCPU_GetFeatures();
   pltTime_Init();
   
   int serverresult = SV_Init

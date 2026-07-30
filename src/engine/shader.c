@@ -116,6 +116,11 @@ static int Shader_Load(CBaseShader* shader, const char* vertPath, const char* fr
   shader->uniforms[SH_UNIFORM_UI_ROUNDING] = 
     glGetUniformLocation(shader->program, "uRounding");
 
+  // Texture
+  shader->uniforms[SH_UNIFORM_TEXTURE] = 
+    glGetUniformLocation(shader->program, "uTexture");
+  shader->uniforms[SH_UNIFORM_USE_TEXTURE] =
+    glGetUniformLocation(shader->program, "uUseTexture");
 
   shader->srcVertex = vertPath;
   shader->srcFrag = fragPath;
@@ -162,6 +167,15 @@ void CBaseShader_SetMat4(CBaseShader* shader, CBaseShaderLocType loctype, mat4 m
     printf("%0.2f ", matrix[i]);
   printf("\n");
   */
+}
+
+
+void CBaseShader_SetInt(CBaseShader* shader, CBaseShaderLocType loctype, int data)
+{
+  if (!shader)
+    exit(1);
+  GLuint loc = shader->uniforms[loctype];
+  glUniform1i(loc, data);
 }
 
 void CBaseShader_SetVec2(CBaseShader* shader, CBaseShaderLocType loctype, float vec2[2])

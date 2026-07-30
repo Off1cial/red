@@ -9,6 +9,21 @@
 #include "shared/network/packet.h"
 #include "shared/network/pframe.h"
 
+
+
+typedef enum clientstate_t
+{
+  CSTATE_EMPTY,
+  CSTATE_CONNECTING,
+  CSTATE_CONNECTED, // Bound address/socket
+  CSTATE_JOINING,
+  CSTATE_ACTIVE,
+  CSTATE_ZOMBIE, // Not responding but dont close socket yet
+
+} clientstate_t;
+
+
+
 typedef struct client_s
 {
   struct sockaddr_in addr_udp;
@@ -36,6 +51,7 @@ void CL_Loop(client_t* client, double dt);
 
 // Network fundamentals
 
+// Simply forms connection between client and server
 int CL_Connect(
     client_t* client, 
     const char* ip, 
@@ -48,7 +64,7 @@ int CL_Disconnect( client_t* client );
 int CL_SendPacketUDP(client_t* client, netpacket_t* packet);
 int CL_SendPacketTCP(client_t* client, netpacket_t* packet);
 
-int CL_SendConnectPacket(client_t* client);
+int CL_SendChallengePacket(client_t* client);
 
 int CL_ReceivePacketUDP(client_t* client);
 
