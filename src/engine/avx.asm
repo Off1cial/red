@@ -252,6 +252,9 @@ AVX_IntegrateFMA3:
     add rdx, 0x10
     add rdi, 0x10
 
+    sub rcx, 0x4
+    jmp .sseloop
+
   .tail:
     test rcx, rcx
     jz .done
