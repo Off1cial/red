@@ -33,7 +33,7 @@ AVX_Add:
 
   .sseloop: ; Same as above but with just 4 floats
     cmp rdx, 0x4
-    jl .done
+    jl .tail
 
     movups xmm1, [rsi]
     addps xmm1, xmm0
@@ -60,7 +60,7 @@ AVX_Add:
     dec rdx
     jmp .tail
 
-  .done
+  .done:
     vzeroupper
     mov rax, rdx
     ret
@@ -95,7 +95,7 @@ AVX_AddArrays:
 
   .sseloop:
     cmp rcx, 0x4
-    jl .done
+    jl .tail
     
     movups xmm0, [rsi]
     movups xmm1, [rdx]
@@ -164,7 +164,7 @@ AVX_Integrate:
 
   .sseloop: ; Integrate 4 floats
     cmp rcx, 0x4
-    jl .done
+    jl .tail
 
     movups xmm1, [rsi]
     movups xmm2, [rdx]
@@ -181,7 +181,27 @@ AVX_Integrate:
     
     sub rcx, 0x4
     jmp .sseloop
-  
+
+  .tail:
+    test rcx, rcx
+    jz .done
+
+    movss xmm1, [rsi]
+    movss xmm2, [rdx]
+
+    mulss xmm2, xmm0
+    addss xmm1, xmm2
+    
+    movss [rdi], xmm1
+
+    ; advance 4 bytes
+    add rsi, 0x4
+    add rdx, 0x4
+    add rdi, 0x4
+
+    dec rcx
+    jmp .tail
+
   .done:
     vzeroupper
     mov rax, rcx
@@ -218,7 +238,7 @@ AVX_IntegrateFMA3:
 
   .sseloop:
     cmp rcx, 0x4
-    jl .done
+    jl .tail
 
     movups xmm1, [rsi]
     movups xmm2, [rdx]
@@ -231,6 +251,23 @@ AVX_IntegrateFMA3:
     add rsi, 0x10
     add rdx, 0x10
     add rdi, 0x10
+
+  .tail:
+    test rcx, rcx
+    jz .done
+    movss xmm1, [rsi]
+    movss xmm2, [rdx]
+
+    vfmadd231ss xmm1, xmm2, xmm0
+    movss [rdi], xmm1
+
+    ; advance 4 bytes, 1 float
+    add rsi, 0x4
+    add rdx, 0x4
+    add rdi, 0x4
+  
+    dec rcx
+    jmp .tail
 
   .done:
     vzeroupper

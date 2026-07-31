@@ -6,21 +6,6 @@
 
 // Returns the number of remaining floats to be worked on sequentially
 
-// Add two arrays together
-int AVX_AddArrays(float* dst, float* a, float* b, int count);
-// Mutliply every element in a by its matching element in b
-int AVX_MultiplyArrays(float* dst, float* a, float* b, int count);
-
-// Add 'value' to all elements of a
-int AVX_AddValue(float* dst, float* a, float val, int count);
-// Multiply all elements in a by 'value'
-int AVX_MutliplyValue(float* dst, float* a, float val, int count);
-
-// dst = a[i] + (b[i] * m), with FMA3 (Single instruction)
-int AVX_IntegrateFMA3(float* dst, float* a, float* b, float m, int count);
-// dst = a[i] + (b[i] * m)
-int AVX_Integrate(float* dst, float* a, float* b, float m, int count);
-
 
 
 simdvec3_t SIMDVEC3_New(size_t count)
@@ -58,9 +43,9 @@ int SIMDVEC3_Add(simdvec3_t* out, simdvec3_t* a, simdvec3_t* b, int count)
 
   if (!out || !a || !b || (count <= 0))
     return 0;
-  int remain = AVX_Add(out->x, a->x, b->x, count);
-  AVX_Add(out->y, a->y, b->y, count);
-  AVX_Add(out->z, a->z, b->z, count);
+  int remain = AVX_AddArrays(out->x, a->x, b->x, count);
+  AVX_AddArrays(out->y, a->y, b->y, count);
+  AVX_AddArrays(out->z, a->z, b->z, count);
   int start = count - remain;
   // Linear finish
   for (int i = start; i < count; i++)

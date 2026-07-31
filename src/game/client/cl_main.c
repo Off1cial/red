@@ -145,6 +145,18 @@ int main()
   testpacket.size = len;
   strcpy(testpacket.data, str);
  
+  // ASM Testing
+  float ra[14] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27};
+  float rb[14] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 ,26, 28};
+  float rc[14];
+
+  int res = AVX_AddArrays(rc, ra, rb, 14);
+  printf("Res = %d\n", res);
+  for (int i = 0; i < 14; i++)
+  {
+    printf("%0.2f ", rc[i]);
+  }
+  printf("\n");
 
 
   double timestamp = pltTime_Time();

@@ -37,3 +37,20 @@ void SSE_FloatsAdd(
 int SIMDVEC3_Add(simdvec3_t* out, simdvec3_t* a, simdvec3_t* b, int count);
 
 int SIMDVEC3_Integrate(simdvec3_t* out, simdvec3_t* a, simdvec3_t* b, float m, int count);
+
+
+// Add two arrays together
+int AVX_AddArrays(float* dst, float* a, float* b, int count);
+// Mutliply every element in a by its matching element in b
+int AVX_MultiplyArrays(float* dst, float* a, float* b, int count);
+
+// Add 'value' to all elements of a
+int AVX_AddValue(float* dst, float* a, float val, int count);
+// Multiply all elements in a by 'value'
+int AVX_MutliplyValue(float* dst, float* a, float val, int count);
+
+// dst = a[i] + (b[i] * m), with FMA3 (Single instruction)
+int AVX_IntegrateFMA3(float* dst, float* a, float* b, float m, int count);
+// dst = a[i] + (b[i] * m)
+int AVX_Integrate(float* dst, float* a, float* b, float m, int count);
+
