@@ -388,8 +388,7 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   }
   if (!win->collapsed)
   {
-    rgba border;
-    UI_SETCOLRGBA_WHITE(border);
+    rgba border = {255, 255, 255, 170};
     border[3]=170;
     UI_DrawRectOutline(win->rect, border, 1.0f);
   }

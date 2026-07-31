@@ -10,7 +10,7 @@ typedef struct uivertex_t
 {
   float pos[2];
   float uv[2];
-  float colour[4];
+  uint32_t col;
 } uivertex_t;
 
 /*
@@ -146,7 +146,7 @@ extern uicontext_t* gUIctx;
 uint8_t UI_Init();
 
 // ui_draw.c
-void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, vec4_t colour);
+void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba colour);
 
 // Upload data to GPU
 void UI_DrawBatch(); 

@@ -33,6 +33,8 @@ typedef enum CBASE_SHADER_LOC_TYPE
   SH_UNIFORM_UI_RECTSIZE, // Width and height
   SH_UNIFORM_UI_RECTPOS, // Centre position
   SH_UNIFORM_UI_ROUNDING,
+
+  SH_UNIFORM_UI_SCREENSIZE,
   
 
   SH_UNIFORM_COUNT // Not a uniform - counter, must be last

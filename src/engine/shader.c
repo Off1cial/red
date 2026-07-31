@@ -116,6 +116,9 @@ static int Shader_Load(CBaseShader* shader, const char* vertPath, const char* fr
   shader->uniforms[SH_UNIFORM_UI_ROUNDING] = 
     glGetUniformLocation(shader->program, "uRounding");
 
+  shader->uniforms[SH_UNIFORM_UI_SCREENSIZE] = 
+    glGetUniformLocation(shader->program, "uScreenSize");
+
   // Texture
   shader->uniforms[SH_UNIFORM_TEXTURE] = 
     glGetUniformLocation(shader->program, "uTexture");

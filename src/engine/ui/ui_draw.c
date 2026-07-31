@@ -109,7 +109,7 @@ static uint32_t UI_PushVertex(uivertex_t v)
   
   if (gUIctx->vertexcount >= gUIctx->vertexcapacity)
   {
-    if (!grow_vertex_array(&gUIctx->vertices, &gUIctx->vertexcapacity))
+    if (!grow_vertex_array())
       return UI32_INVALID;
   }
 
@@ -131,7 +131,7 @@ static uint8_t UI_PushTriangle(
 
   if (gUIctx->indexcount + 3 >= gUIctx->indexcapacity)
   {
-    if (!grow_index_array(&gUIctx->indices, &gUIctx->indexcapacity))
+    if (!grow_index_array())
       return 0;
   }
 
@@ -148,20 +148,90 @@ static void UI_ScreenToNDC(float x, float y, float out[2])
     out[1] = 1.0f - (y / gPltWindow->winh) * 2.0f;
 }
 
-static inline void uivertex_setpos(uivertex_t* v, float pos[2])
+static inline void uivertex_setpos(uivertex_t* v, float x, float y)
 {
-  UI_ScreenToNDC(pos[0], pos[1], v->pos);
+  //UI_ScreenToNDC(pos[0], pos[1], v->pos);
+  v->pos[0] = x;
+  v->pos[1] = y;
 }
 
 static inline void uivertex_setcolour(uivertex_t* v, rgba colour)
 {
-  v->colour[0] = colour[0] / 255; v->colour[1] = colour[1] / 255;
-  v->colour[2] = colour[2] / 255; v->colour[3] = colour[3] / 255;
+  uint32_t col = COL32(colour[0], colour[1], colour[2], colour[3]);
+  v->col = col;
 }
 
-static inline void UI_AddChar(const char c, uint32_t fontid, float posx, float posy, vec4_t colour);
+static inline void UI_AddChar(const char c, uint32_t fontid, float posx, float posy, rgba colour)
+{
+  // Find the text batch for this font
+  ui_textbatch_t* batch = NULL;
+  for (int i = 0; i < gUIctx->textbatch_count; i++)
+  {
+    if (fontid == gUIctx->textbatches[i].font)
+    {
+      batch = &gUIctx->textbatches[i];
+      break;
+    }
+  }
+  if (!batch)
+  {
+    // Create a batch
+    TextBatch_Init(&gUIctx->textbatches[gUIctx->textbatch_count], fontid);
+    batch = &gUIctx->textbatches[gUIctx->textbatch_count++];
+  }
+  assetFont_t* font = AssetManager_GetFont(fontid);
+  byte idx = (byte)c;
+  if (idx < 32 || idx >= ASSETS_MAX_FONT_GLYPHS)
+    return;
 
-void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, vec4_t colour)
+  struct _fontglyph* glyph = &font->glyphs[idx];
+  if (glyph->w == 0 && glyph->h == 0)
+    return;
+  
+  //float base = posy + font->ascent;
+  float x1 = posx + glyph->w;
+  float y1 = posy + glyph->h;
+
+  uint8_t ascii = (uint8_t)(c);
+
+  uivertex_t v0, v1, v2, v3;
+  uivertex_setcolour(&v0, colour);
+  uivertex_setcolour(&v1, colour);
+  uivertex_setcolour(&v2, colour);
+  uivertex_setcolour(&v3, colour);
+  
+  //UI_ScreenToNDC(posx, posy, v0.pos);
+  //UI_ScreenToNDC(x1, posy, v1.pos);
+  //UI_ScreenToNDC(x1, y1, v2.pos);
+  //UI_ScreenToNDC(posx, y1, v3.pos);
+  uivertex_setpos(&v0, posx, posy);
+  uivertex_setpos(&v1, x1, posy);
+  uivertex_setpos(&v2, x1, y1);
+  uivertex_setpos(&v3, posx, y1);
+
+  v0.uv[0] = glyph->uv0[0];
+  v0.uv[1] = glyph->uv0[1];
+  
+  v1.uv[0] = glyph->uv1[0];
+  v1.uv[1] = glyph->uv0[1];
+
+  v2.uv[0] = glyph->uv1[0];
+  v2.uv[1] = glyph->uv1[1];
+
+  v3.uv[0] = glyph->uv0[0];
+  v3.uv[1] = glyph->uv1[1];
+  
+  uint32_t i0 = TextBatch_PushVertex(batch, v0);
+  uint32_t i1 = TextBatch_PushVertex(batch, v1);
+  uint32_t i2 = TextBatch_PushVertex(batch, v2);
+  uint32_t i3 = TextBatch_PushVertex(batch, v3);
+
+  TextBatch_PushTriangle(batch, i0, i1, i2);
+  TextBatch_PushTriangle(batch, i0, i2, i3);
+
+}
+
+void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba colour)
 {
   // Find the batch for this font
   ui_textbatch_t* batch = NULL;
@@ -215,10 +285,15 @@ void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, vec4_
     uivertex_setcolour(&v2, colour);
     uivertex_setcolour(&v3, colour);
     
-    UI_ScreenToNDC(x0, y0, v0.pos);
-    UI_ScreenToNDC(x1, y0, v1.pos);
-    UI_ScreenToNDC(x1, y1, v2.pos);
-    UI_ScreenToNDC(x0, y1, v3.pos);
+    //UI_ScreenToNDC(x0, y0, v0.pos);
+    //UI_ScreenToNDC(x1, y0, v1.pos);
+    //UI_ScreenToNDC(x1, y1, v2.pos);
+    //UI_ScreenToNDC(x0, y1, v3.pos);
+
+    uivertex_setpos(&v0, x0, y0);
+    uivertex_setpos(&v1, x1, y0);
+    uivertex_setpos(&v2, x1, y1);
+    uivertex_setpos(&v3, x0, y1);
 
     v0.uv[0] = glyph->uv0[0];
     v0.uv[1] = glyph->uv0[1];
@@ -331,25 +406,25 @@ void UI_DrawRect(
 
   rectv[UI_RECTCORNER_TR].uv[0] = u2;
   rectv[UI_RECTCORNER_TR].uv[1] = v1;
+  
+  uint32_t col32 = COL32(col[0], col[1], col[2], col[3]);
+  rectv[0].col = col32;
+  rectv[1].col = col32;
+  rectv[2].col = col32;
+  rectv[3].col = col32;
 
+
+  /*
   for (int i = 0; i < 4; i++)
   {
-    rectv[i].colour[0] = col[0] / 255.0f;
-    rectv[i].colour[1] = col[1] / 255.0f;
-    rectv[i].colour[2] = col[2] / 255.0f;
-    rectv[i].colour[3] = col[3] / 255.0f;
-
-
     // Move this to the GPU -> uniform vec2 screensize
     UI_ScreenToNDC(rectv[i].pos[0], rectv[i].pos[1], rectv[i].pos);
     //uidebug_printvert(rectv[i].pos);
     //uidebug_printcolour(rectv[i].colour);
 
   }
+  */
 
-  // Since it uses openGL, i can have gradients
-  //rectv[3].colour[0] = 1.0f;
-  //rectv[2].colour[1] = 1.0f;
   uint32_t i0 = UI_PushVertex(rectv[0]);
   uint32_t i1 = UI_PushVertex(rectv[1]);
   uint32_t i2 = UI_PushVertex(rectv[2]);
@@ -400,9 +475,9 @@ void UI_DrawTriangle(float v0[2], float v1[2], float v2[2], rgba colour)
   uivertex_t verts[3];
   memset(verts, 0, sizeof(uivertex_t)* 3);
 
-  uivertex_setpos(&verts[0], v0);
-  uivertex_setpos(&verts[1], v1);
-  uivertex_setpos(&verts[2], v2);
+  uivertex_setpos(&verts[0], v0[0], v0[1]);
+  uivertex_setpos(&verts[1], v1[0], v1[1]);
+  uivertex_setpos(&verts[2], v2[0], v2[1]);
 
 
   uivertex_setcolour(&verts[0], colour);
@@ -469,10 +544,10 @@ static void UI_DrawTextBatch(ui_textbatch_t* batch)
       );
   // Colour
   glEnableVertexAttribArray(2);
-  glVertexAttribPointer(
-      2, 4,
-      GL_FLOAT, GL_FALSE,
-      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, colour)
+  glVertexAttribIPointer(
+      2, 1,
+      GL_UNSIGNED_INT, 
+      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, col)
       );
 
   glDrawElements(
@@ -508,6 +583,10 @@ void UI_DrawBatch()
 
   // Bind shader
   CBaseShader_Use(gUIctx->shader);
+  vec2_t screensize;
+  screensize[0] = gPltWindow->winw;
+  screensize[1] = gPltWindow->winh;
+  CBaseShader_SetVec2(gUIctx->shader, SH_UNIFORM_UI_SCREENSIZE, screensize);
   if (gUIctx->activetex == -1)
   {
     CBaseShader_SetInt(gUIctx->shader, SH_UNIFORM_USE_TEXTURE, 0);
@@ -554,10 +633,10 @@ void UI_DrawBatch()
       sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, uv));
   // colour
   glEnableVertexAttribArray(2);
-  glVertexAttribPointer(
-      2, 4, 
-      GL_FLOAT, GL_FALSE, 
-      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, colour));
+  glVertexAttribIPointer(
+      2, 1, 
+      GL_UNSIGNED_INT, 
+      sizeof(uivertex_t), (void*)OFFSETOF(uivertex_t, col));
   
   glDrawElements(
       GL_TRIANGLES, 

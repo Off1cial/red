@@ -2,13 +2,13 @@ global AVX_AddArrays
 global AVX_Integrate
 global AVX_IntegrateFMA3
 
-global AVX_Add
+global AVX_AddValue
 
 ; TODO : Add tailing to finish the remaining < 4 values to avoid the C cleanup
 
 section .text
   
-AVX_Add:
+AVX_AddValue:
 ; rdi = dst
 ; rsi = a
 ; xmm0 = val

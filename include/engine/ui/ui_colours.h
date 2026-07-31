@@ -1,8 +1,9 @@
 #pragma once
 
+#include <stdint.h>
 
-typedef float rgb[3];
-typedef float rgba[4];
+typedef uint8_t rgb[3];
+typedef uint8_t rgba[4];
 // UI Colours are internally 0-1 floats, however
 // When creating UI elements, the functions are expected to take 0-255 values
 
@@ -21,12 +22,14 @@ do { \
     (dest)[2] = (rgb)[2]; \
 } while (0)
 
+/*
 #define RGBSet(dest, r, g, b) \
 do { \
     (dest)[0] = (r); \
     (dest)[1] = (g); \
     (dest)[2] = (b); \
 } while (0)
+*/
 
 #define RGBACopy(dest, rgba) \
 do { \
@@ -36,6 +39,7 @@ do { \
     (dest)[3] = (rgba)[3]; \
 } while (0)
 
+/*
 #define RGBASet(dest, r, g, b, a) \
 do { \
     (dest)[0] = (r); \
@@ -43,20 +47,29 @@ do { \
     (dest)[2] = (b); \
     (dest)[3] = (a); \
 } while (0)
+*/
 
+static inline void RGBASet(rgba dst, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+  dst[0] = r; dst[1] = g; dst[2] = b; dst[3] = a;
+}
 
+static inline void RGBSet(rgb dst, uint8_t r, uint8_t g, uint8_t b)
+{
+  dst[0] = r; dst[1] = g; dst[2] = b;
+}
 
 
 // Colour presets
-#define UI_SETCOLRGB_WHITE(col) RGBSet(col, 255, 255, 255)
 
-#define UI_SETCOLRGB_RED(col) RGBSet(col, 255, 0, 0)
-#define UI_SETCOLRGB_GREEN(col) RGBSet(col, 0, 255, 0)
-#define UI_SETCOLRGB_BLUE(col) RGBSet(col, 0, 0, 255)
+#define UI_COLOR_WHITE 0xFFFFFFFF
+#define UI_COLOR_RED   0xFF0000FF
+#define UI_COLOR_GREEN 0xFF00FF00
+#define UI_COLOR_BLUE  0xFFFF0000
 
 
-#define UI_SETCOLRGBA_WHITE(col) RGBASet(col, 255, 255, 255, 255)
-
-#define UI_SETCOLRGBA_RED(col) RGBASet(col, 255, 0, 0, 255)
-#define UI_SETCOLRGBA_GREEN(col) RGBASet(col, 0, 255, 0, 255)
-#define UI_SETCOLRGBA_BLUE(col) RGBASet(col, 0, 0, 255, 255)
+#define COL32(r,g,b,a) \
+    ((uint32_t)(r)       | \
+    ((uint32_t)(g) << 8) | \
+    ((uint32_t)(b) << 16)| \
+    ((uint32_t)(a) << 24))

@@ -151,6 +151,7 @@ int main()
   float rc[14];
 
   int res = AVX_AddArrays(rc, ra, rb, 14);
+  int a = AVX_AddValue(rc, ra, 1.0f, 14);
   printf("Res = %d\n", res);
   for (int i = 0; i < 14; i++)
   {
@@ -195,7 +196,7 @@ int main()
     rectdef win2; 
     UIRECT_NULL(win2);
     UIRECT_NULL(rect);
-    vec4_t texcol = {255, 255, 0, 255};
+    rgba texcol = {255, 255, 0, 255};
     UI_AddText("COCK", 0, 0, 0, texcol);
     if (UI_Begin("Window", windowrect, 0))
     {
