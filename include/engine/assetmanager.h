@@ -1,11 +1,12 @@
 #pragma once
 #include <stdint.h>
 
-#include <glad/glad.h>
-#include <SDL3_ttf/SDL_ttf.h>
 #include "engine/shader.h"
-#include "engine/mesh.h"
+#include "engine/texture.h"
+#include "engine/model.h"
 
+#define ASSETS_MAX_MESHES 256
+#define ASSETS_MAX_MODELS 256
 #define ASSETS_MAX_TEXTURES 256
 #define ASSETS_MAX_MATERIALS 512
 #define ASSETS_MAX_SHADERS 64
@@ -31,9 +32,8 @@ typedef struct assetTexture_t
 {
   char path[256];
   assethandle_t handle;
-  GLuint texid;
-  int width, height;
   assetstate_t state;
+  texture_t texture;
 } assetTexture_t;
 
 struct _texregistry
@@ -61,10 +61,10 @@ struct _materialregistry
 
 typedef struct assetShader_t
 {
-  char path[256];
-  assethandle_t handle;
-  CBaseShader *shader;
-  assetstate_t state;
+  char           path[256];
+  assethandle_t  handle;
+  CBaseShader    shader;
+  assetstate_t   state;
 } assetShader_t;
 
 struct _shaderregistry
@@ -103,14 +103,27 @@ struct _fontregistry
   uint32_t count;
 };
 
-typedef struct assetMesh_t
+
+
+typedef struct assetModel_t
 {
-  gpuVertex *vertices;
-  size_t vertexcount;
-} assetMesh_t;
+  char path[256];
+  assetstate_t state;
+  assethandle_t handle;
+
+  model_t model;
+
+} assetModel_t;
+
+struct _modelregistry 
+{
+  assetModel_t models[ASSETS_MAX_MODELS];
+  uint32_t count;
+};
 
 typedef struct AssetManager
 {
+  struct _modelregistry models;
   struct _texregistry textures;
   struct _shaderregistry shaders;
   struct _materialregistry materials;
@@ -119,11 +132,19 @@ typedef struct AssetManager
   assetFont_t *fontHashTable[ASSETS_FONT_HASH_BUCKETS];
 } CBaseAssetManager;
 
+
+
+
+
 extern CBaseAssetManager *gAssetManager;
 
 uint8_t AssetManager_AddFont(const char *path, int size);
 uint32_t AssetManager_AddTexture(const char *path);
+uint32_t AssetManager_AddModel(const char* path);
+
+
 uint32_t AssetManager_GetFontID(const char *name);
+uint8_t AssetManager_LoadModel(const char* path, model_t* out);
 
 uint8_t AssetManager_Init();
 

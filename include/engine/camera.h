@@ -30,6 +30,7 @@ typedef struct camera_t
     
 } camera_t;
 
+extern camera_t* gCamera;
 
 camera_t* Camera_Create(vec3_t position, vec3_t direction, cViewport viewport);
 
@@ -39,7 +40,6 @@ void Camera_Update(camera_t* camera);
 void Camera_Destroy(camera_t* camera);
 
 
-typedef camera_t camera_t;
 
 #endif
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <pthread.h>
+#include "engine/physics.h"
 #include "game/server/server.h"
 #include "platform/cpu.h"
 #include "corebase/time.h"
@@ -19,7 +20,7 @@ void SV_Close(server_t* server)
 }
 
 
-server_t* server = NULL;
+server_t* gServer = NULL;
 
 void* thread_test()
 {
@@ -29,7 +30,7 @@ void* thread_test()
 
 int main()
 {
-  server = malloc(sizeof(server_t));
+  gServer = malloc(sizeof(server_t));
   cpufeatures_t cpufeat;
   gPltCPUFeatures = &cpufeat;
   pltCPU_GetFeatures();
@@ -37,7 +38,7 @@ int main()
   
   int serverresult = SV_Init
     (
-     server,
+     gServer,
      "TestServer",
      NET_DOMAIN_IPV4
     );
@@ -48,7 +49,7 @@ int main()
     return 1;
   }
 
-  server->state = SERVER_STATE_ACTIVE;
+  gServer->state = SERVER_STATE_ACTIVE;
 
   char hostname[256];
   gethostname(hostname, sizeof(hostname));
@@ -58,35 +59,54 @@ int main()
   
   strcpy(hostip, inet_ntoa(*(struct in_addr*)host->h_addr_list[0]));
 
-  printf("[SERVER]: %dHz Server started on %s:%d\n", SERVER_TICKRATE, hostip, ntohs(server->addr_udp.sin_port));
+  printf("[SERVER]: %dHz Server started on %s:%d\n", SERVER_TICKRATE, hostip, ntohs(gServer->addr_udp.sin_port));
 
+  CBasePhysBodies_Init(gPhysBodies, 256);
 
   double previous = pltTime_Time(); 
   double accumulator = 0.0f;
 
+  float host_frametime = 0.0f;
 
-  while (server->state == SERVER_STATE_ACTIVE)
+  while (gServer->state == SERVER_STATE_ACTIVE)
   {
 
     double time = pltTime_Time();
     accumulator += time - previous;
+    host_frametime = time - previous;
     previous = time;
 
     if (accumulator >= 1.0f / SERVER_TICKRATE)
     {
       //SV_ClientAcceptTCP(server);
-      SV_ReceivePacketUDP(server);
-      for (int i = 0; i < server->clientcount; i++)
+      SV_ReceivePacketUDP(gServer);
+      for (int i = 0; i < gServer->clientcount; i++)
       {
-        if (server->clients[i].state != SVCLIENT_STATE_CONNECTED)
+        svclient_t* client = &gServer->clients[i];
+        if (client->state != SVCLIENT_STATE_CONNECTED)
           continue;
-        server->clients[i].time_elapsed+=time-previous;
+
+        client->time_elapsed+=host_frametime;
+        // Accelerate.. move etc
+        svplayer_t* cplayer = &gServer->players[client->playerid];
+        SV_PlayerThink(cplayer, (float)(1.0f/SERVER_TICKRATE));
       }
       accumulator -= (1.0 / SERVER_TICKRATE);
+      // Update physics
+      //CBasePhysBodies_Update(gPhysBodies, SERVER_TICKRATE);
+    }
+    // Post simulation
+    for (int i = 0; i < gServer->clientcount; i++)
+    { 
+      svclient_t* client = &gServer->clients[i];
+      if (client->state != SVCLIENT_STATE_CONNECTED)
+        continue;
+      //svplayer_t* cplayer = &gServer->players[client->playerid];
+      SV_SendPlayerFrame(client);
     }
   }
   
-  SV_Close(server);
+  SV_Close(gServer);
 
   return 0;
 }

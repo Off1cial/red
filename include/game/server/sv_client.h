@@ -21,6 +21,7 @@ typedef struct svclient_t
   netsocket_t socket_tcp;
   
   svclientstate_t state;
+  uint32_t playerid;
 
   double time_connected;
   double time_lastrecv;

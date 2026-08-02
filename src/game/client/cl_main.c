@@ -52,38 +52,22 @@ const gpuVertex v2 = {
   .col = {0.0, 0.0, 1.0}
 };
 
-client_t* client;
+client_t* gClient;
 
 
 void CL_Loop(client_t* client, double dt)
 {
-  if (client->socket_udp != -1)
-    CL_ReceivePacketUDP(client);
+  
+  if (client->socket_udp == -1)
+    return;
+  
 
-  if (client->state == CSTATE_CONNECTED)
-  {
-    // Attempt to join server
-    double now = pltTime_Time();
-    if (now - client->time_lastconnectattempt > 2.0f)
-    {
-      if (client->connect_attempts >= client->connect_maxattempts)
-      {
-        printf("[CLIENT]: Connection failed after %d retries\n",
-            client->connect_attempts);
-        client->connect_attempts = 0;
-        CL_Disconnect(client);
-        return;
-      }
-      // Retry connection
-
-      printf("[CLIENT]: Retrying connection...\n");
-      
-      client->connect_attempts++;
-      client->time_lastconnectattempt = now;
-      CL_SendChallengePacket(client);
-    }
-  }
-
+  netpacket_t newmsg;
+  int res = CL_GetMessage(&newmsg);
+  ///if (res == CLIENT_FAILURE)
+    //return;
+  CL_ParseMessage(&newmsg);
+  CL_Think(dt);
 }
 
 
@@ -103,7 +87,6 @@ int main()
 
   pltTime_Init();
 
-  TTF_Init();
   AssetManager_Init();
   UI_Init();
   
@@ -117,14 +100,15 @@ int main()
   CBaseMesh_Upload(mTriangle, GL_STATIC_DRAW);
 
   camera_t* camera = Camera_Create(VEC_ZERO, VEC_AXIS_Z, (cViewport){0,0,1280,720});
-
+  
+  gCamera = camera;
   glViewport(0,0, win->winw, win->winh);
 
   char msg_disconnect[] = "Chode";
   size_t msg_disconnect_len = strlen(msg_disconnect);
 
-  client = malloc(sizeof(client_t));
-  CL_Init(client, "redw0od0");
+  gClient = malloc(sizeof(client_t));
+  CL_Init(gClient, "redw0od0");
 
   //CL_Connect(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP);
   
@@ -170,16 +154,18 @@ int main()
     double dt = time - timestamp;
 
 
-    // Run on other thread?
-    CL_Loop(client, dt);
 
 
     timestamp = time;
 
-    glClearColor(0.12f, 0.1f, 0.1f, 1.0f); 
+    glClearColor(0.12f, 0.1f, 0.18f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
       
     PlatformInput_Poll(gPltWindow->window, input, &quit); 
+    CL_PMove(dt);
+    float speed = VectorLength(gPlayer.velocity);
+    // Run on other thread?
+    CL_Loop(gClient, dt);
     UI_FrameBegin();
     // Check for window resize
     if (input->eventWindowResized)
@@ -196,46 +182,37 @@ int main()
     rectdef win2; 
     UIRECT_NULL(win2);
     UIRECT_NULL(rect);
-    rgba texcol = {255, 255, 0, 255};
-    UI_AddText("COCK", 0, 0, 0, texcol);
+    rgba texcol = {255, 53, 180, 255};
+    char speedbuff[32];
+    snprintf(speedbuff, 32, "%0.1f", speed);
+    UI_AddText(speedbuff, 0, 80, 30, texcol);
     if (UI_Begin("Window", windowrect, 0))
     {
       if (UI_Button("Button", rect))
       {
         printf("Clicked\n");
-        if (client->state != CSTATE_CONNECTED)
-          CL_GameServerJoin(client, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP, 2);
+        if (gClient->state != CSTATE_CONNECTED)
+          CL_GameServerJoin(gClient, "127.0.0.1", SERVER_PORT, NET_PROTOCOL_UDP, 2);
       }
       if (UI_Button("Disconnect", rect))
       {
-        CL_GameServerDisconnect(client, "Im leaving", 10);
+        CL_GameServerDisconnect(gClient, "Im leaving", 10);
       }
     }
     UI_End();
 
-    Console_Draw();
+    //Console_Draw();
 
     Camera_Look(camera, input->mxrel, input->myrel, 0.8f);
-
-    if (input->pressed[SDL_SCANCODE_S])
-    {
-      printf("Move\n");
-      VectorSub(camera->origin, camera->front, camera->origin);
-    }
-
-    if (input->pressed[SDL_SCANCODE_P] && (client->socket_udp >= 0))
-    {
-      CL_GameServerDisconnect(client, msg_disconnect, msg_disconnect_len );
-    }
-
     Camera_Update(camera);
     CBaseShader_Use(shader);
     CBaseShader_SetMat4(shader, SH_UNIFORM_VIEW, camera->view);
     CBaseShader_SetMat4(shader, SH_UNIFORM_PROJECTION, camera->projection);
     CBaseShader_SetMat4(shader, SH_UNIFORM_MODEL, MAT4_IDENTITY);
 
+    CBaseMesh_Draw(testmodel.mesh, GL_TRIANGLES);
     CBaseMesh_Draw(mTriangle, GL_TRIANGLES);
-    UI_DrawBatch();
+    UI_FrameEnd();
 
     while (glGetError() != GL_NO_ERROR)
       printf("GL error\n");

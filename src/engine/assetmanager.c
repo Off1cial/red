@@ -10,6 +10,8 @@
 #include "engine/hash.h"
 #include "platform/stb_image.h"
 #include <SDL3_ttf/SDL_ttf.h>
+#include <glad/glad.h>
+
 
 const char *assetDir = ASSET_DIR;
 
@@ -87,9 +89,9 @@ uint32_t AssetManager_AddTexture(const char *path)
   assetTexture_t *tex = &gAssetManager->textures.tex[idx];
   memset(tex, 0, sizeof(*tex));
 
-  tex->texid = texid;
-  tex->width = width;
-  tex->height = height;
+  tex->texture.gltexnum = texid;
+  tex->texture.w = width;
+  tex->texture.h = height;
   tex->state = ASSET_LOADED;
   tex->handle.index = idx;
 
@@ -213,6 +215,8 @@ uint8_t AssetManager_AddFont(const char *path, int size)
   return 1;
 }
 
+
+
 uint32_t AssetManger_GetFontID(const char *name)
 {
   uint32_t bucket = Hash_Bucket(Hash_String(name), ASSETS_FONT_HASH_BUCKETS);
@@ -229,6 +233,19 @@ uint32_t AssetManger_GetFontID(const char *name)
   return (uint32_t)-1;
 }
 
+
+uint8_t AssetManager_LoadModel(const char* path, model_t* out)
+{
+  mdlheader_t header;
+  if (!ModelFile_GetModel(path, out, &header))
+    return 0;
+
+  out->texturehandle = AssetManager_AddTexture(header.texpath);
+  return 1;
+}
+
+
+
 uint8_t AssetManager_Init()
 {
   gAssetManager = malloc(sizeof(CBaseAssetManager));
@@ -237,6 +254,12 @@ uint8_t AssetManager_Init()
 
   memset(gAssetManager, 0, sizeof(CBaseAssetManager));
 
+  TTF_Init();
+
   AssetManager_AddFont("Fonts/Roboto.ttf", 40);
+
+  ModelFile_Write("Models/obj/cube.obj", "Textures/dev.png", "Models/mdl/cube.mdl");
+  AssetManager_LoadModel("Models/mdl/cube.mdl", &testmodel);
+
   return 1;
 }

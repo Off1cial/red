@@ -3,6 +3,8 @@
 #include "platform/memarena.h"
 #include <stdalign.h>
 
+CBasePhysBodies* gPhysBodies = NULL;
+
 static inline int AlignedNew_Safe(void** dst, size_t c, size_t align)
 {
   if (!dst)
@@ -105,19 +107,6 @@ uint32_t CBasePhysBodies_Create(
 
 
 
-
-void Physbody_AddForce(CBasePhysBodies* arr, uint32_t body, vec3_t force)
-{
-  // F = ma, a = F/m = F * ( 1.0f / m )
-  if (body >= arr->count)
-    return;
-  
-  float invmass = arr->invmass[body];
-  arr->acceleration.x[body] += force[0] * invmass;
-  arr->acceleration.y[body] += force[1] * invmass;
-  arr->acceleration.z[body] += force[2] * invmass;
-}
-
 static void physbody_updatevelocity(CBasePhysBodies* arr, float dt)
 {
   if (!arr)
@@ -141,4 +130,64 @@ void CBasePhysBodies_Update(CBasePhysBodies* arr, float dt)
 
   physbody_updatevelocity(arr, dt);
   physbody_updateposition(arr, dt);
+}
+
+// Zeros out if the body isnt appropriate
+static inline uint8_t BodyBoundsCheck(uint32_t body, vec3_t out)
+{
+  if (body < gPhysBodies->count)
+    return 0 ;
+
+  VectorCopy(VEC_ZERO, out);
+  return 1;
+}
+
+// Getters
+
+
+
+void Physbody_GetVelocity(uint32_t body, vec3_t vel)
+{
+  if (!BodyBoundsCheck(body, vel))
+    return;
+
+  simdvec3_t* vec = &gPhysBodies->velocity;
+  vel[0] = vec->x[body];
+  vel[1] = vec->y[body];
+  vel[1] = vec->z[body];
+}
+
+void Physbody_GetAcceleration(uint32_t body, vec3_t acc)
+{
+  if (!BodyBoundsCheck(body, acc))
+    return;
+
+  simdvec3_t* vec = &gPhysBodies->acceleration;
+  acc[0] = vec->x[body];
+  acc[1] = vec->y[body];
+  acc[2] = vec->z[body];
+}
+
+
+void Physbody_AddAccel(uint32_t body, vec3_t accel)
+{ 
+  if (body >= gPhysBodies->count)
+    return;
+
+  simdvec3_t* vec = &gPhysBodies->acceleration;
+  vec->x[body] += accel[0];
+  vec->y[body] += accel[1];
+  vec->z[body] += accel[2];
+}
+
+void Physbody_AddForce(CBasePhysBodies* arr, uint32_t body, vec3_t force)
+{
+  // F = ma, a = F/m = F * ( 1.0f / m )
+  if (body >= arr->count)
+    return;
+  
+  float invmass = arr->invmass[body];
+  arr->acceleration.x[body] += force[0] * invmass;
+  arr->acceleration.y[body] += force[1] * invmass;
+  arr->acceleration.z[body] += force[2] * invmass;
 }

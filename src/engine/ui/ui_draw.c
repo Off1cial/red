@@ -499,7 +499,7 @@ static void UI_DrawTextBatch(ui_textbatch_t* batch)
 
   if (font->tex_index != -1)
   {
-    GLuint texid = gAssetManager->textures.tex[font->tex_index].texid;
+    GLuint texid = gAssetManager->textures.tex[font->tex_index].texture.gltexnum;
     if (texid != -1)
     {
       glActiveTexture(GL_TEXTURE0);

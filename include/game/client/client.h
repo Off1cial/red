@@ -5,9 +5,13 @@
 
 #define CLIENT_NAME_LENGTH 64
 
+#define CLIENT_CMD_BACKUP 64
+
 #include "shared/network/client.h"
 #include "shared/network/packet.h"
 #include "shared/network/pframe.h"
+
+#include "game/client/cl_player.h"
 
 
 
@@ -16,7 +20,6 @@ typedef enum clientstate_t
   CSTATE_EMPTY,
   CSTATE_CONNECTING,
   CSTATE_CONNECTED, // Bound address/socket
-  CSTATE_JOINING,
   CSTATE_ACTIVE,
   CSTATE_ZOMBIE, // Not responding but dont close socket yet
 
@@ -32,17 +35,23 @@ typedef struct client_s
   netsocket_t socket_udp;
 
   clientstate_t state;
-  uint8_t serverslot;
+  uint16_t serverslot;
 
   int connect_attempts;
   int connect_maxattempts;
 
-  double time_lastconnectattempt;
+  float time_lastconnectattempt;
+  float time_lastcmdsent;
+
 
   char name[CLIENT_NAME_LENGTH];
 
+  playercmd_t cmds[CLIENT_CMD_BACKUP];
+  int cmdcount;
+
 } client_t;
 
+extern client_t* gClient;
 
 int CL_Init(client_t* client, const char* name);
 
@@ -84,3 +93,19 @@ int CL_GameServerDisconnect(
 int CL_SendPlayerFrame(client_t* client, playerframe_t* frame);
 // Receive player information from the current server
 int CL_ReceivePlayerFrame(client_t* client, playerframe_t* frame);
+
+
+void CL_CreatePlayerCommand(float dt);
+void CL_SendPlayerCommand(client_t* client);
+
+uint8_t CL_GetMessage(netpacket_t* msgout);
+uint8_t CL_ParseMessage(netpacket_t* packet);
+
+void CL_Think(float dt);
+
+
+void CL_ProcessPlayerFrame(playerframe_t frame);
+void CL_PlayerThink();
+
+
+void CL_PMove(float dt);

@@ -69,3 +69,8 @@ void UI_FrameBegin()
 
 
 }
+
+void UI_FrameEnd()
+{
+  UI_DrawBatch();
+}

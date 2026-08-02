@@ -22,12 +22,17 @@ int SV_SendPacketToClientUDP(
       (struct sockaddr*)&server->clients[client].addr_udp,
       sizeof(server->clients[client].addr_udp)
       );
-  printf("[SERVER]: Send packet of size %zuB to client %d\n",
-      sizeof(*packet), client);
+  //printf("[SERVER]: Send packet of size %zuB to client %d\n",
+    //  sizeof(*packet), client);
 
   return SERVER_SUCCESS;
 }
 
+void SV_ProcessClientCommand(svclient_t* client, playercmd_t* cmd)
+{
+  //printf("Processing packet %d of client %d\n", cmd->sequence, client->id);
+  memcpy(&gServer->players[client->playerid].cmd, cmd, sizeof(playercmd_t));
+}
 
 int SV_ReceivePacketUDP(server_t* server)
 {
@@ -50,9 +55,9 @@ int SV_ReceivePacketUDP(server_t* server)
         return SERVER_FAILURE;
 
   
-    printf("[SERVER]: Packet received via UDP:\n");
-    printf("  Size: %dB\n", size);
-    printf("  Data: %s\n", packet.data);
+    //printf("[SERVER]: Packet received via UDP:\n");
+    //printf("  Size: %dB\n", size);
+    //printf("  Data: %s\n", packet.data);
   
     svclient_t* client = SV_FindClientUDP(server, &from);
     switch (packet.type)
@@ -119,11 +124,32 @@ int SV_ReceivePacketUDP(server_t* server)
         int cid = client - server->clients; 
         SV_ClientDrop(server, cid, packet.data);
         break;
-  
-
+    
+      case NET_PACKET_CLCMD:
+        // verify packet data?
+        //memcpy(&client->cmd, packet.data, sizeof(playercmd_t));
+        SV_ProcessClientCommand(client, (playercmd_t*)&packet.data);
+        break;
     }
 
     // Find or create client using 'from'
 
     return SERVER_SUCCESS;
+}
+
+
+
+
+void SV_SendPlayerFrame(svclient_t* client)
+{
+  if (!client)
+    return;
+  svplayer_t* player = &gServer->players[client->playerid];
+  playerframe_t* frame = &player->frame;
+
+  netpacket_t packet = {0};
+  packet.type = NET_PACKET_PFRAME;
+  
+  memcpy(packet.data, frame, sizeof(playerframe_t));
+  SV_SendPacketToClientUDP(gServer, client->id, &packet);
 }

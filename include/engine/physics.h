@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 
-// Server side data, the client can just store positions?
 typedef struct PHYS_SIMD_BODIES
 {
   simdvec3_t origin;
@@ -23,10 +22,10 @@ typedef struct PHYS_SIMD_BODIES
 
 } CBasePhysBodies;
 
+extern CBasePhysBodies* gPhysBodies;
 
 int CBasePhysBodies_Init(CBasePhysBodies* array, size_t capacity);
 void CBasePhysBodies_Free(CBasePhysBodies* array);
-
 
 uint32_t CBasePhysBodies_Create(CBasePhysBodies* arr,
     vec3_t origin, 
@@ -37,6 +36,11 @@ uint32_t CBasePhysBodies_Create(CBasePhysBodies* arr,
     vec3_t aabb_max
     );
 
+void CBasePhysBodies_Update(CBasePhysBodies* arr, float dt);
 
+// Getters
+void Physbody_GetVelocity(uint32_t body, vec3_t vel);
 
+void Physbody_GetAcceleration(uint32_t body, vec3_t acc);
 
+void Physbody_AddAccel(uint32_t body, vec3_t accel);

@@ -148,7 +148,7 @@ CBaseShader* CBaseShader_Create(const char* vert, const char* frag)
     free(s);
     return NULL;
   }
-  DisplayUniforms(s);
+  //DisplayUniforms(s);
   return s;
 }
 

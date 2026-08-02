@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "engine/camera.h"
 
+camera_t* gCamera = NULL;
 
 
 camera_t* Camera_Create(vec3_t position, vec3_t direction, cViewport viewport)
@@ -35,7 +36,7 @@ void Camera_Destroy(camera_t* camera)
 void Camera_Update(camera_t* camera)
 {
   QAngleVector(camera->angles, camera->front);
-  VectorNormalise(camera->front, camera->front); 
+  VectorNormalise(camera->front); 
 
   VectorCrossNorm(camera->front, VEC_AXIS_Y, camera->right);
   VectorCrossNorm(camera->right, camera->front, camera->up);
@@ -68,5 +69,4 @@ void Camera_Look(camera_t* camera, float m_dx, float m_dy, float sens)
     camera->angles[PITCH] = 89.0f;
   if (camera->angles[PITCH] < - 89.0f)
     camera->angles[PITCH] = -89.0f;
-
 }

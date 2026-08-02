@@ -129,23 +129,21 @@ static inline float VectorDistance(const vec3_t a, const vec3_t b)
   return VectorLength(diff);
 }
 
-static inline float VectorNormalise(
-    const vec3_t v,
-    vec3_t out)
+static inline float VectorNormalise(vec3_t v)
 {
   float mag = VectorLength(v);
 
   if (mag <= EPSILON)
   {
-    Vector(out, 0.0f, 0.0f, 0.0f);
+    Vector(v, 0.0f, 0.0f, 0.0f);
     return 0.0f;
   }
 
   float inv = 1.0f / mag;
 
-  out[0] = v[0] * inv;
-  out[1] = v[1] * inv;
-  out[2] = v[2] * inv;
+  v[0] *= inv;
+  v[1] *= inv;
+  v[2] *= inv;
 
   return mag;
 }
@@ -166,7 +164,7 @@ static inline void VectorCrossNorm(
     vec3_t cross)
 {
   VectorCross(v1, v2, cross);
-  VectorNormalise(cross, cross);
+  VectorNormalise(cross);
 }
 
 static inline void VectorScale(vec3_t v, float scale)
@@ -262,15 +260,15 @@ static inline void Mat4LookAt(
 
   // Camera backward direction
   VectorSub(eye, center, back);
-  VectorNormalise(back, back);
+  VectorNormalise(back);
 
   // Camera right direction
   VectorCross(up, back, right);
-  VectorNormalise(right, right);
+  VectorNormalise(right);
 
   // Corrected up direction
   VectorCross(back, right, real_up);
-  VectorNormalise(real_up, real_up);
+  VectorNormalise(real_up);
 
   Mat4Identity(view);
 
@@ -329,9 +327,30 @@ typedef struct plane_t
 {
   vec3_t normal;
   vec_t d;
-
 } plane_t;
 
-plane_t PlaneReverse(plane_t plane);
+static inline plane_t PlaneReverse(plane_t plane)
+{
+  plane_t p = {0};
+  p.d = -plane.d;
+  p.normal[0] = -plane.normal[0];
+  p.normal[1] = -plane.normal[1];
+  p.normal[2] = -plane.normal[2];
+  return p;
+}
+
+// Turns the negative plane into the positive plane
+static inline void PlaneNormalise(plane_t* plane)
+{
+  int i;
+  if (plane->d > 0)
+    return;
+
+
+  plane->d = -plane->d;
+  plane->normal[0] = -plane->normal[0];
+  plane->normal[1] = -plane->normal[1];
+  plane->normal[2] = -plane->normal[2];
+}
 
 #endif

@@ -21,7 +21,9 @@ file(GLOB_RECURSE SOURCE_SHARED
     src/corebase/*.c
     src/shared/network/*.c
     src/platform/cpu.c
-    src/engine/*.asm
+    src/platform/common.c
+    src/engine/avx.asm
+    src/game/shared/*.c
 
 )
 
@@ -47,10 +49,21 @@ file(GLOB_RECURSE SOURCE_SERVER
     src/server/*.c
     src/platform/network/*.c
     src/game/server/*.c
-    
+    src/engine/physics.c
+    src/engine/simd.c
 )
 
+# -------------------------
+# Editor Sources
+# -------------------------
 
+file(GLOB_RECURSE SOURCE_EDITOR
+    src/engine/*.c
+    src/engine/ui/*.c
+    src/platform/*.c
+    src/game/shared/*.c
+    src/editor/*.c
+)
 
 # -------------------------
 # Client executable
@@ -83,6 +96,23 @@ target_compile_definitions(server PRIVATE
 )
 
 # -------------------------
+# Editor executable
+# -------------------------
+
+add_executable(editor
+    ${SOURCE_SHARED}
+    ${SOURCE_EDITOR}
+)
+
+target_compile_definitions(editor PRIVATE
+    EDITOR_BUILD
+)
+
+target_compile_definitions(editor PRIVATE
+    ASSET_DIR="${CMAKE_SOURCE_DIR}/Assets")
+
+
+# -------------------------
 # Common include paths
 # -------------------------
 
@@ -94,8 +124,12 @@ target_include_directories(server PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
+target_include_directories(editor PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
+
 # -------------------------
-# Client libraries
+# Client and Editor libraries
 # -------------------------
 
 target_include_directories(client PRIVATE
@@ -116,15 +150,41 @@ target_link_libraries(client PRIVATE
     ${SDL3TTF_LIBRARIES}
 )
 
+target_include_directories(editor PRIVATE
+    ${SDL3_INCLUDE_DIRS}
+    ${SDL3IMAGE_INCLUDE_DIRS}
+    ${SDL3TTF_INCLUDE_DIRS}
+)
+
+target_link_directories(editor PRIVATE
+    ${SDL3_LIBRARY_DIRS}
+    ${SDL3IMAGE_LIBRARY_DIRS}
+    ${SDL3TTF_LIBRARY_DIRS}
+)
+
+target_link_libraries(editor PRIVATE
+    ${SDL3_LIBRARIES}
+    ${SDL3IMAGE_LIBRARIES}
+    ${SDL3TTF_LIBRARIES}
+)
+
 if(WIN32)
 
     target_link_libraries(client PRIVATE
         opengl32
     )
 
+    target_link_libraries(editor PRIVATE
+        opengl32
+    )
+
 elseif(UNIX)
 
     target_link_libraries(client PRIVATE
+        GL
+        m
+    )
+    target_link_libraries(editor PRIVATE
         GL
         m
     )
@@ -152,7 +212,7 @@ target_link_libraries(server PRIVATE
 # Compiler settings
 # -------------------------
 
-set_target_properties(client server PROPERTIES
+set_target_properties(client server editor PROPERTIES
     C_STANDARD 11
     C_STANDARD_REQUIRED YES
     C_EXTENSIONS NO
@@ -164,7 +224,7 @@ set_target_properties(client server PROPERTIES
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT WIN32)
 
-    foreach(target client server)
+    foreach(target client server editor)
 
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:

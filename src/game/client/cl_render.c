@@ -30,7 +30,7 @@ void Renderer_Submit(renderpass_id_t passid, uint32_t mesh, uint32_t material, m
 
   if (pass->count >= pass->capacity)
   {
-    pass->capacity *= 2;
+    pass->capacity = pass->capacity ? pass->capacity * 2 : 256;
     pass->commands = realloc(pass->commands, sizeof(rendercommand_t) * pass->capacity);
   }
 

@@ -23,7 +23,25 @@ typedef struct cvar_s
 
   float       value;     // atof(string)
   int         value_int; // atoi(string)
+
+  float value_min;
+  float value_max;
   
+  float* linked; // Linked value in memory for quick access e.g sv_airaccelerate
   struct cvar_s* hashNext;
   struct cvar_s* next;
 } cvar_t;
+
+
+extern float cl_sensitivity;
+
+extern float sv_accelerate;
+extern float sv_airaccelerate;
+extern float sv_stopspeed;
+extern float sv_maxspeed;
+extern float sv_friction;
+
+
+const char* Cvar_ValueString(const char* name);
+float Cvar_ValueFloat(const char* name);
+int Cvar_ValueInteger(const char* name);

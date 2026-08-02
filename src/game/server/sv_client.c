@@ -98,3 +98,9 @@ svclient_t* SV_FindClientUDP(server_t* server, struct sockaddr_in* addr)
   }
   return NULL;
 }
+
+
+
+
+void SV_ClientThink(svclient_t* client);
+// Move around, etc..

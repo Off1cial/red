@@ -8,6 +8,7 @@
 #include "shared/network/pframe.h"
 
 #include "game/server/sv_client.h"
+#include "game/server/sv_player.h"
 
 
 #define SERVER_MAX_CLIENTS 32
@@ -29,7 +30,9 @@ typedef enum server_state_t
 typedef struct server_t
 {
   svclient_t clients[SERVER_MAX_CLIENTS];
+  svplayer_t players[SERVER_MAX_CLIENTS]; // More for bots?
   int clientcount;
+  int playercount;
 
   char name[STRING_MAX_LENGTH];
 
@@ -45,6 +48,7 @@ typedef struct server_t
 
 } server_t;
 
+extern server_t* gServer;
 
 int SV_Init(
     server_t* server, 
@@ -53,6 +57,8 @@ int SV_Init(
 );
 
 void SV_Close(server_t* server);
+
+void SV_CreatePlayer(svclient_t* client);
 
 int SV_ClientAcceptTCP(server_t* server);
 int SV_ClientConnectUDP(server_t* server, struct sockaddr_in* addr, netpacket_t* packet);
@@ -64,3 +70,8 @@ int SV_SendPacketToClientUDP(server_t* server, int client, netpacket_t* packet);
 int SV_ReceivePacketUDP(server_t* server);
 
 svclient_t* SV_FindClientUDP(server_t* server, struct sockaddr_in* addr); 
+
+
+void SV_SendPlayerFrame(svclient_t* client);
+
+extern float host_frametime;

@@ -1,4 +1,5 @@
 #include "game/client/client.h"
+#include "engine/camera.h"
 #include <stdint.h>
 #include <unistd.h>
 
@@ -67,7 +68,7 @@ int CL_ReceivePacketUDP(client_t* client)
       printf("[CLIENT]: Server accepted connection!\n  Index: %d\n", index);
 
       client->serverslot = index;
-      client->state = CSTATE_JOINING;
+      client->state = CSTATE_ACTIVE;
       break;
     case NET_PACKET_DISCONNECT:
       // Server sent a DC packet
@@ -78,7 +79,99 @@ int CL_ReceivePacketUDP(client_t* client)
     default:
       printf("[CLIENT][PACKET]: Generic packet received\n");
       break;
+
+    case NET_PACKET_PFRAME:
+      printf("Player frame received\n");
+      playerframe_t* frame = (playerframe_t*)&packet.data;
+      //printf("Origin: (%0.2f, %0.2f, %0.2f)\n", frame->origin[0], frame->origin[1], frame->origin[2]);
+      //VectorCopy(frame->origin, gCamera->origin);
+      CL_ProcessPlayerFrame(*frame);
+      break;
   }
 
   return CLIENT_SUCCESS;
+}
+
+
+
+// NEW TIDIER FUNCTIONS
+
+
+uint8_t CL_GetMessage(netpacket_t* msgout)
+{
+  netpacket_t inpacket = {0};
+  struct sockaddr_in serveraddr;
+  socklen_t fromlen = sizeof(serveraddr);
+
+  int size = 
+    recv(
+      gClient->socket_udp, 
+      &inpacket, 
+      sizeof(inpacket), 
+      MSG_DONTWAIT);
+
+    
+  if (size <= 0)
+  {
+    return CLIENT_FAILURE;
+  }
+
+  *msgout = inpacket;
+  return CLIENT_SUCCESS;
+}
+
+uint8_t CL_ParseMessage(netpacket_t* packet)
+{
+  //printf("TYPE = %d\n", packet->type);
+  switch(packet->type)
+  {
+    case NET_PACKET_ACCEPT:
+      // Server allowed connection
+      uint16_t clientindex = -1;
+      memcpy(&clientindex, packet->data, sizeof(clientindex));
+      printf("[CLIENT]: Server accepted connection!\n  Index: %d\n", clientindex);
+
+      gClient->serverslot = clientindex;
+      gClient->state = CSTATE_ACTIVE;
+      break;
+    
+    case NET_PACKET_DISCONNECT:
+      // Server told us to disconnect
+      CL_Disconnect(gClient);
+      gClient->state = CSTATE_EMPTY;
+      break;
+
+    case NET_PACKET_PFRAME:
+      // Received a player frame
+      playerframe_t* frame = (playerframe_t*)&packet->data;
+      CL_ProcessPlayerFrame(*frame);
+      break;
+    default:
+      return CLIENT_FAILURE;
+      break;
+  }
+  return CLIENT_SUCCESS;
+}
+
+
+
+void CL_SendPlayerCommand(client_t* client)
+{
+  netpacket_t movpacket = {0};
+  movpacket.type = NET_PACKET_CLCMD;
+
+  int max = NET_PACKET_SIZE / sizeof(playercmd_t);
+  int backup = (max > 3) ? 3 : max;
+  byte* ptr = &movpacket.data[0];
+  //printf("Preparing player commands\n");
+  for (int i = 0; i < backup; i++)
+  {
+    int idx = (gClient->cmdcount - 1 - i) % CLIENT_CMD_BACKUP;
+    if (idx < 0)
+      break;
+    playercmd_t* cmd = &gClient->cmds[idx];
+    memcpy(ptr, cmd, sizeof(playercmd_t));
+    ptr+=sizeof(playercmd_t);
+  }
+  CL_SendPacketUDP(gClient, &movpacket);
 }
