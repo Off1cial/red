@@ -1,4 +1,5 @@
 #include "game/client/client.h"
+#include "game/shared/cvar.h"
 
 
 int CL_Init(client_t* client, const char* name)
@@ -14,5 +15,7 @@ int CL_Init(client_t* client, const char* name)
   strncpy(client->name, name, len);
   client->name[len] = '\0';
 
+
+  //Cvar_InitAll();
   return 1;
 }

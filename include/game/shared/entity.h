@@ -1,6 +1,7 @@
 #pragma once
 
 #include "corebase/mathlib.h"
+#include <stdint.h>
 
 #define ENTITY_MAX 2048
 
@@ -13,17 +14,6 @@ typedef enum etype_t
 
 
 
-typedef struct entity_state_t
-{
-  vec3_t origin;
-  qangle angles;
-  // int model
-  // int anim
-  // int animframe
-  // uint64_t effects
-  // etc..
-
-} entity_state_t;
 
 
 typedef struct epair_s
@@ -35,12 +25,22 @@ typedef struct epair_s
 
 } epair_t;
 
+typedef struct entvars_s
+{ 
+  vec3_t origin;
+  vec3_t velocity;
+  qangle angles;
+  uint8_t movtype;
+  uint8_t movflags;
+
+    
+} entvars_t;
+
 typedef struct entity_s
 {
   etype_t type;
-  entity_state_t state;
   epair_t pair;
-  
+  entvars_t v;
 } entity_t;
 
 

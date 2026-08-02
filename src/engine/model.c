@@ -127,11 +127,16 @@ static uint32_t MeshBuild_GetAddVertex(meshbuild_t* mb, int vi, int ti, int ni, 
   return newindex;
 }
 
+
 static void MeshBuild_Free(meshbuild_t* mb)
 {
   for (int i = 0; i < OBJ_HASH_BUCKETS; i++)
-    free(mb->buckets);
+  {
+    if (mb->buckets[i]) free(mb->buckets[i]);
+    mb->buckets[i] = NULL;
+  }
 }
+
 
 
 
@@ -223,7 +228,7 @@ void OBJ_Load(
           VectorCopy(normals.data[ ni[fi] - 1 ], gv.normal);
           gv.uv[0] = uvs.data[ ti[fi] - 1 ][0];
           gv.uv[1] = uvs.data[ ti[fi] - 1 ][1];
-          Vector(gv.col, 1.0f, 1.0f, 1.0f);
+          Vector(gv.col, 0.6f, 0.6f, 0.6f);
 
           uint32_t meshindex = MeshBuild_GetAddVertex(&mb, vi[fi], ti[fi], ni[fi], gv);
           MeshBuild_PushIndex(&mb, meshindex);
@@ -241,6 +246,9 @@ void OBJ_Load(
 
   *out_indices = mb.indices;
   *out_indexcount = mb.indexcount;
+
+  MeshBuild_Free(&mb);
+
 }
 
 uint8_t ModelFile_Write(const char *objsource, const char *texpath, const char *destination)

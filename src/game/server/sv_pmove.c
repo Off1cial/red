@@ -8,6 +8,8 @@
 
 float wishspeed = 320.0f;
 
+
+
 /*
 void SV_Accelerate(svplayer_t* player, float accel)
 {
@@ -43,7 +45,7 @@ void SV_Accelerate(svplayer_t* player, float accel)
 
   Physbody_AddAccel(body, acceleration);
 }
-*/
+
 
 void SV_UserFriction(vec3_t velocity, float dt)
 {
@@ -82,3 +84,5 @@ void SV_Accelerate(vec3_t velocity, vec3_t wishdir, float wishspeed, float dt)
   velocity[1] += accelspeed * wishdir[1];
   velocity[2] += accelspeed * wishdir[2];
 }
+
+*/

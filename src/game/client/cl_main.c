@@ -58,15 +58,17 @@ client_t* gClient;
 void CL_Loop(client_t* client, double dt)
 {
   
-  if (client->socket_udp == -1)
-    return;
+  if (client->socket_udp != -1)
+  {
+    netpacket_t newmsg;
+    int res = CL_GetMessage(&newmsg);
+    ///if (res == CLIENT_FAILURE)
+    //return;
+    CL_ParseMessage(&newmsg);
+
+  }
   
 
-  netpacket_t newmsg;
-  int res = CL_GetMessage(&newmsg);
-  ///if (res == CLIENT_FAILURE)
-    //return;
-  CL_ParseMessage(&newmsg);
   CL_Think(dt);
 }
 
@@ -79,7 +81,7 @@ int main()
   pltCPU_GetFeatures();
   pltCPU_PrintFeatures();
 
-  pltWindow* win = PlatformWindow_Create(640,480, "RED");
+  pltWindow* win = PlatformWindow_Create(854,480, "RED");
   gPltWindow = win; // clean this up later
   pltInput* input = PlatformInput_Create();
   gPltInput = input;
@@ -133,9 +135,11 @@ int main()
   float ra[14] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27};
   float rb[14] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 ,26, 28};
   float rc[14];
-
+  
+  printf("here 2");
   int res = AVX_AddArrays(rc, ra, rb, 14);
   int a = AVX_AddValue(rc, ra, 1.0f, 14);
+  printf("here 1\n");
   printf("Res = %d\n", res);
   for (int i = 0; i < 14; i++)
   {
@@ -162,7 +166,7 @@ int main()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
       
     PlatformInput_Poll(gPltWindow->window, input, &quit); 
-    CL_PMove(dt);
+    //CL_PMove(dt);
     float speed = VectorLength(gPlayer.velocity);
     // Run on other thread?
     CL_Loop(gClient, dt);

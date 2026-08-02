@@ -1,10 +1,12 @@
 #include "game/server/server.h"
+#include "game/shared/cvar.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <assert.h>
+
 
 static void setclients(server_t* server)
 {
@@ -97,5 +99,6 @@ int SV_Init(
     return SERVER_FAILURE;
   }
 
+  Cvar_InitAll();
   return SERVER_SUCCESS;
 }

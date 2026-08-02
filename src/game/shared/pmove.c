@@ -44,42 +44,59 @@ void PM_Accelerate(vec3_t velocity, vec3_t wishdir, float wishspeed, float dt)
   velocity[2] += accelspeed * wishdir[2];
 }
 
+
+void PM_AirAccelerate(vec3_t velocity, vec3_t wishdir, vec3_t wishspeed, float dt);
+
 void PM_Move(playercmd_t* cmd, vec3_t origin, vec3_t velocity, vec3_t forwardout, float dt)
 {
     // 1. friction acts on EXISTING velocity, read/write in place
     PM_UserFriction(velocity, dt);
 
     // 2. wishdir/wishspeed computed fresh from this tick's input
-    vec3_t forward, right, wishdir;
+    vec3_t forward, right;
     QAngleVector(cmd->viewangles, forward);
     VectorCrossNorm(forward, VEC_AXIS_Y, right);
 
 
+    /*
     if (cmd->pm_up >= 1.0f)
       cmd->buttons |= PM_BUTTON_JUMP;
   
-    if (!cmd->onground && ((cmd->buttons & PM_BUTTON_JUMP) != 0))
+    if (origin[1] > 0)
+      cmd->onground = 0;
+    else
+      cmd->onground = 1;
+
+    if (cmd->onground && ((cmd->buttons & PM_BUTTON_JUMP) != 0))
     {
-      velocity[1] += 20.0f;
+      printf("Jump\n");
+      velocity[1] += 270.0f;
     }
+    */
+    
+    vec3_t wishvel, wishdir;
 
-    wishdir[0] = forward[0] * cmd->pm_forward + right[0] * cmd->pm_side;
-    wishdir[1] = 0;
-    wishdir[2] = forward[2] * cmd->pm_forward + right[2] * cmd->pm_side;
+    wishvel[0] = forward[0] * cmd->pm_forward * sv_maxspeed + right[0] * cmd->pm_side * sv_maxspeed;
+    wishvel[1] = 0;
+    wishvel[2] = forward[2] * cmd->pm_forward * sv_maxspeed + right[2] * cmd->pm_side * sv_maxspeed;
+  
 
-    float wishspeed = VectorNormalise(wishdir); // normalizes wishdir in place, returns its old length
-    if (wishspeed > 1.0f)
-      wishspeed = 1.0f;
-    wishspeed *= 20;
+
+    VectorCopy(wishvel, wishdir);
+    float wishspeed = VectorNormalise(wishdir); // normalizes wishvel in place, returns its old length
     if (wishspeed > sv_maxspeed) wishspeed = sv_maxspeed;
 
     // 3. accelerate — reads player->velocity, writes player->velocity
     PM_Accelerate(velocity, wishdir, wishspeed, dt);
+    //velocity[1] -= 400.0f * dt;
 
     // 4. integrate position from the (now updated) velocity
     origin[0] += velocity[0] * dt;
     origin[1] += velocity[1] * dt;
     origin[2] += velocity[2] * dt;
+
+    if (origin[1] < 0)
+      origin[1] = 0;
 
     VectorCopy(forward, forwardout);
 }

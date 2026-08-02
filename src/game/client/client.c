@@ -38,10 +38,10 @@ void CL_Think(float dt)
 
 
   CL_CreatePlayerCommand(dt);
-  //playercmd_t* latestcmd = &gClient->cmds[(gClient->cmdcount - 1) % CLIENT_CMD_BACKUP];
+  playercmd_t* latestcmd = &gClient->cmds[(gClient->cmdcount - 1) % CLIENT_CMD_BACKUP];
 
-  //PM_Move(latestcmd, gPlayer.origin, gPlayer.velocity, gPlayer.lookdir, dt);
-  //VectorCopy(gPlayer.origin, gCamera->origin);
+  PM_Move(latestcmd, gPlayer.origin, gPlayer.velocity, gPlayer.lookdir, dt);
+  VectorCopy(gPlayer.origin, gCamera->origin);
 
   float now = pltTime_Time();
   if (now - gClient->time_lastcmdsent >= 1.0f / 30.0f)

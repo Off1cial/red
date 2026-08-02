@@ -259,6 +259,8 @@ uint8_t AssetManager_Init()
   AssetManager_AddFont("Fonts/Roboto.ttf", 40);
 
   ModelFile_Write("Models/obj/cube.obj", "Textures/dev.png", "Models/mdl/cube.mdl");
+  //ModelFile_Write("Models/obj/isosphere.obj", "Textures/dev.png", "Models/mdl/isosphere.mdl");
+  //ModelFile_Write("Models/obj/donut.obj", "Textures/dev.png", "Models/mdl/donut.mdl");
   AssetManager_LoadModel("Models/mdl/cube.mdl", &testmodel);
 
   return 1;
