@@ -17,7 +17,7 @@
 typedef struct material_t
 {
   float col[4]; 
-  lbyte flags;
+  uint16_t flags;
 
   texture_t* base;
   texture_t* normal;

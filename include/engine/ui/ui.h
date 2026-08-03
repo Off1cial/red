@@ -148,6 +148,9 @@ uint8_t UI_Init();
 // ui_draw.c
 void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba colour);
 
+
+void UI_DrawLine(vec2_t a,vec2_t b, u32 col,float thickness);
+
 // Upload data to GPU
 void UI_DrawBatch(); 
 

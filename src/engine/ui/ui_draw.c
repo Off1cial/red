@@ -7,6 +7,10 @@
 
 #define UI32_INVALID ((uint32_t)-1) // 0xFFFFFFFF
 
+static inline u32 RGBA_32(rgba col)
+{
+  return COL32(col[0], col[1], col[2], col[3]);
+}
 
 static uint8_t grow_vertex_array()
 {
@@ -319,6 +323,33 @@ void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba 
   }
 }
 
+void UI_DrawLine(vec2_t a, vec2_t b, u32 col, float thickness)
+{
+  vec2_t dir, perp;
+  Vector2Sub(b, a, dir);
+  perp[0] = -dir[1];
+  perp[1] = dir[0];
+
+  // A and B have two points
+  vec2_t a0, a1;
+  vec2_t b0, b1;
+
+  float halfthick = 0.005 * thickness;
+  a0[0] = a[0] + perp[0] * halfthick;
+  a0[1] = a[1] + perp[1] * halfthick;
+  
+  a1[0] = a[0] - perp[0] * halfthick;
+  a1[1] = a[1] - perp[1] * halfthick;
+
+  b0[0] = b[0] + perp[0] * halfthick;
+  b0[1] = b[1] + perp[1] * halfthick;
+  
+  b1[0] = b[0] - perp[0] * halfthick;
+  b1[1] = b[1] - perp[1] * halfthick;
+
+  UI_DrawTriangle(a0, b0, b1, col);
+  UI_DrawTriangle(b1, a1, a0, col);
+}
 
 static void uidebug_printvert(float pos[2])
 {
@@ -376,7 +407,7 @@ void UI_DrawRect(
     rectdef rect, 
     float u1, float v1,
     float u2, float v2,
-    rgba col,
+    u32 col,
     GLint texid)
 {
   // Upload vertices to the context batch
@@ -407,11 +438,11 @@ void UI_DrawRect(
   rectv[UI_RECTCORNER_TR].uv[0] = u2;
   rectv[UI_RECTCORNER_TR].uv[1] = v1;
   
-  uint32_t col32 = COL32(col[0], col[1], col[2], col[3]);
-  rectv[0].col = col32;
-  rectv[1].col = col32;
-  rectv[2].col = col32;
-  rectv[3].col = col32;
+  
+  rectv[0].col = col;
+  rectv[1].col = col;
+  rectv[2].col = col;
+  rectv[3].col = col;
 
 
   /*
@@ -464,13 +495,15 @@ void UI_DrawRectOutline(rectdef rect, rgba col, float thickness)
         rect[RECT_H]
     };
 
-    UI_DrawRect(top,    0, 0, 1, 1, col, -1);
-    UI_DrawRect(bottom, 0, 0, 1, 1, col, -1);
-    UI_DrawRect(left,   0, 0, 1, 1, col, -1);
-    UI_DrawRect(right,  0, 0, 1, 1, col, -1);
+    u32 col32 = RGBA_32(col);
+    UI_DrawRect(top,    0, 0, 1, 1, col32, -1);
+    UI_DrawRect(bottom, 0, 0, 1, 1, col32, -1);
+    UI_DrawRect(left,   0, 0, 1, 1, col32, -1);
+    UI_DrawRect(right,  0, 0, 1, 1, col32, -1);
 }
 
-void UI_DrawTriangle(float v0[2], float v1[2], float v2[2], rgba colour)
+
+void UI_DrawTriangle(float v0[2], float v1[2], float v2[2], u32 col)
 {
   uivertex_t verts[3];
   memset(verts, 0, sizeof(uivertex_t)* 3);
@@ -478,11 +511,11 @@ void UI_DrawTriangle(float v0[2], float v1[2], float v2[2], rgba colour)
   uivertex_setpos(&verts[0], v0[0], v0[1]);
   uivertex_setpos(&verts[1], v1[0], v1[1]);
   uivertex_setpos(&verts[2], v2[0], v2[1]);
+  
 
-
-  uivertex_setcolour(&verts[0], colour);
-  uivertex_setcolour(&verts[1], colour);
-  uivertex_setcolour(&verts[2], colour);
+  verts[0].col = col;
+  verts[1].col = col;
+  verts[2].col = col;
 
   GLuint i0 = UI_PushVertex(verts[0]);
   GLuint i1 = UI_PushVertex(verts[1]);

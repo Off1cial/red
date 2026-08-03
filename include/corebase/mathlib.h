@@ -202,6 +202,7 @@ static inline void Vector2Copy(
   dst[1] = v[1];
 }
 
+
 // Matrices
 
 typedef vec_t mat4[4][4];
@@ -352,5 +353,13 @@ static inline void PlaneNormalise(plane_t* plane)
   plane->normal[1] = -plane->normal[1];
   plane->normal[2] = -plane->normal[2];
 }
+
+
+#include <stdint.h>
+
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t u8;
 
 #endif

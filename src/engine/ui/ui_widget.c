@@ -26,6 +26,11 @@ static uint32_t ui_hash_id(const char* str, uint32_t seed) {
 }
 
 
+static inline u32 RGBA_32(rgba col)
+{
+  return COL32(col[0], col[1], col[2], col[3]);
+}
+
 static void ui_rectcorner(rectdef rect, int i, float out[2])
 {
   switch(i)
@@ -195,7 +200,7 @@ uint8_t UI_Button(const char* name, rectdef rect)
   }
   //printf("Colour determined\n\t(%0.2f, %0.2f, %0.2f, %0.2f)\n",
      //colour[0], colour[1], colour[2], colour[3]);
-  UI_DrawRect(buttonrect, 0, 0, 1, 1, colour, -1);
+  UI_DrawRect(buttonrect, 0, 0, 1, 1, RGBA_32(colour), -1);
   win->cursor_y += buttonrect[RECT_H] + 8.0f;
 
   return clicked;
@@ -350,10 +355,11 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   // Early exit if collapsed
   if (win->collapsed)
   {
+    
     UI_DrawRect(
         titlebar,
         0, 0, 1, 1,
-        gUIctx->style.window_bg_title,
+        RGBA_32(gUIctx->style.window_bg_title),
         -1);
     return 0;
   }
@@ -373,7 +379,7 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
     UI_DrawRect(
         win->rect,
         0, 0, 1, 1,
-        wincol,
+        RGBA_32(wincol),
         -1);
     
   }
@@ -383,7 +389,7 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
     UI_DrawRect(
         titlebar, 
         0, 0, 1, 1,
-        gUIctx->style.window_bg_title,
+        RGBA_32(gUIctx->style.window_bg_title),
         -1);
   }
   if (!win->collapsed)
@@ -401,7 +407,7 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
     ui_rectcorner(win->rect, UI_RECTCORNER_BR, verts[2]);
     verts[1][1] -= WINDOW_RESIZEHANDLE_SIZE;
     verts[2][0] -= WINDOW_RESIZEHANDLE_SIZE;
-    UI_DrawTriangle(verts[0], verts[1], verts[2], gUIctx->style.window_bg_title);
+    UI_DrawTriangle(verts[0], verts[1], verts[2], RGBA_32(gUIctx->style.window_bg_title));
   }
 
   return 1;

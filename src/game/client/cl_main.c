@@ -136,10 +136,8 @@ int main()
   float rb[14] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 ,26, 28};
   float rc[14];
   
-  printf("here 2");
   int res = AVX_AddArrays(rc, ra, rb, 14);
-  int a = AVX_AddValue(rc, ra, 1.0f, 14);
-  printf("here 1\n");
+  //int a = AVX_AddValue(rc, ra, 1.0f, 14);
   printf("Res = %d\n", res);
   for (int i = 0; i < 14; i++)
   {
@@ -203,6 +201,12 @@ int main()
         CL_GameServerDisconnect(gClient, "Im leaving", 10);
       }
     }
+    vec2_t p0, p1;
+    p0[0] = 0.0f;
+    p0[1] = 0.0f;
+    p1[0] = 200;
+    p1[1] = 200;
+    UI_DrawLine(p0, p1, COL32(255, 200, 100, 255), 0.1f);
     UI_End();
 
     //Console_Draw();
