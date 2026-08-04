@@ -329,12 +329,15 @@ void UI_DrawLine(vec2_t a, vec2_t b, u32 col, float thickness)
   Vector2Sub(b, a, dir);
   perp[0] = -dir[1];
   perp[1] = dir[0];
+  float invperpmag = 1.0f / sqrtf(perp[0] * perp[0] + perp[1] * perp[1]);
+  perp[0] *= invperpmag;
+  perp[1] *= invperpmag;
 
   // A and B have two points
   vec2_t a0, a1;
   vec2_t b0, b1;
 
-  float halfthick = 0.005 * thickness;
+  float halfthick = 0.5 * thickness;
   a0[0] = a[0] + perp[0] * halfthick;
   a0[1] = a[1] + perp[1] * halfthick;
   
@@ -615,6 +618,10 @@ void UI_DrawBatch()
 
 
   // Bind shader
+  if (!gUIctx->shader)
+  {
+    printf("[UI][DRAW]: Missing UI shader!!\n");
+  }
   CBaseShader_Use(gUIctx->shader);
   vec2_t screensize;
   screensize[0] = gPltWindow->winw;
@@ -627,8 +634,8 @@ void UI_DrawBatch()
   else{
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gUIctx->activetex);
-    CBaseShader_SetInt(gUIctx->shader, SH_UNIFORM_USE_TEXTURE, 0);
-    CBaseShader_SetInt(gUIctx->shader, SH_UNIFORM_TEXTURE, gUIctx->activetex);
+    CBaseShader_SetInt(gUIctx->shader, SH_UNIFORM_USE_TEXTURE, 1);
+    CBaseShader_SetInt(gUIctx->shader, SH_UNIFORM_TEXTURE, 1);
   }
 
   // Upload data

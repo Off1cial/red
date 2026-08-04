@@ -99,6 +99,15 @@ brush_t* NewBrush( int facecount )
   return b;
 }
 
+void Brush_Delete(brush_t* b)
+{
+  free(b->faces);
+  b->facecount = 0;
+  b->facecapacity = 0;
+  b->next = b->prev = NULL;
+  free(b);
+}
+
 
 u8 BoundsTiny(vec3_t mins, vec3_t maxs)
 {
@@ -138,20 +147,6 @@ void ClipWinding(winding_t* win, plane_t p, winding_t* out)
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 u8 Brush_AddToList(brush_t* b, brush_t* list)
 {

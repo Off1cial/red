@@ -206,7 +206,7 @@ int main()
     p0[1] = 0.0f;
     p1[0] = 200;
     p1[1] = 200;
-    UI_DrawLine(p0, p1, COL32(255, 200, 100, 255), 0.1f);
+    UI_DrawLine(p0, p1, COL32(255, 200, 100, 255), 1.0f);
     UI_End();
 
     //Console_Draw();

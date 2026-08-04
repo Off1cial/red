@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 // Common stuff innit
 
@@ -52,6 +53,13 @@ typedef uint16_t lbyte;
 
 typedef char* string;
 
+
+
+static inline void clampf(float* f, float lb, float ub)
+{
+  *f = fmaxf(*f, lb);
+  *f = fminf(*f, ub);
+}
 
 
 

@@ -19,6 +19,7 @@ typedef struct PLT_INPUT
 
   float mx, my; // Cursor position relative to top-left origin
   float mxrel, myrel; // Cursor movement
+  float mscrl_x, mscrl_y; // mscrl_x for touchpads, why not
   bool mouselocked;
     
 
@@ -60,3 +61,21 @@ static inline void pltInput_ToggleMouseLock(pltInput* input, SDL_Window* window)
   input->mouselocked = !input->mouselocked;
   SDL_SetWindowRelativeMouseMode(window, input->mouselocked);
 }
+
+// Currently held
+static inline uint8_t pltInput_KeyboardDown(SDL_Scancode key)
+{
+  return gPltInput->kCurrent[key];
+}
+// Pressed only this frame
+static inline uint8_t pltInput_KeyboardPress(SDL_Scancode key)
+{
+  return gPltInput->kCurrent[key] && !gPltInput->kPrevious[key];
+}
+// Released this frame
+static inline uint8_t pltInput_KeyboardRelease(SDL_Scancode key)
+{
+  return !gPltInput->kCurrent[key] && gPltInput->kPrevious[key];
+}
+
+

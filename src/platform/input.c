@@ -47,6 +47,10 @@ void PlatformInput_Poll(SDL_Window* window, pltInput* input, int* quit)
         input->eventWindowNewWidth = event.window.data1;
         input->eventWindowNewHeight = event.window.data2;
         break;
+      case SDL_EVENT_MOUSE_WHEEL:
+        input->mscrl_y = event.wheel.y;
+        input->mscrl_x = event.wheel.x;
+        break;
     }
   }
 
