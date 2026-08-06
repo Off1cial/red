@@ -2,6 +2,7 @@
 
 #include "platform/window.h"
 #include "platform/input.h"
+#include "platform/memarena.h"
 #include "corebase/time.h"
 #include "corebase/mathlib.h"
 #include "engine/ui/ui.h"
@@ -23,7 +24,9 @@ int main()
 
   pltWindow* Window = PlatformWindow_Create(1280, 720, "Editor");
   pltInput* PltInput   = PlatformInput_Create();
-  gPltWindow = Window; gPltInput = PltInput;
+  pltMemArena* MemArena = PlatformMemArena_Create(PLT_MEM_ARENA_GSIZE);
+  gPltWindow = Window; gPltInput = PltInput; gPltMem = MemArena;
+
 
   camera_t* camera = Camera_Create(
       VEC_ZERO, 
@@ -34,6 +37,7 @@ int main()
 
   pltTime_Init();
   AssetManager_Init();
+  ECMD_Init();
   UI_Init();
   GUI_Initialise();
   double timestamp = pltTime_Time();
@@ -54,8 +58,8 @@ int main()
     */
 
     PanelInput();
-
-
+    
+    ECMD_Flush();
 
 
 
@@ -63,7 +67,7 @@ int main()
 
 
     // Rendering
-    glClearColor(0.18, 0.18, 0.12, 1.0);
+    glClearColor(0.16, 0.16, 0.16, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     UI_FrameBegin();
 

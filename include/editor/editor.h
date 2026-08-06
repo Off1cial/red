@@ -60,5 +60,8 @@ typedef union ecmd_t
 void PanelInput();
 
 
-void Editor_BrushCreate(vec3_t mins, vec3_t maxs);
-void Editor_BrushDelete(brush_t* b);
+void ECMD_BrushCreate(vec3_t min, vec3_t max);
+void ECMD_BrushDelete(brush_t* b);
+
+void ECMD_Init();
+void ECMD_Flush();

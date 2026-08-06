@@ -10,16 +10,16 @@ typedef struct PLT_MEM_ARENA
   size_t offset;
 } pltMemArena;
 
-pltMemArena* pltMemArena_Create(size_t size);
-void PltMemArena_Destroy(pltMemArena* arena);
+pltMemArena* PlatformMemArena_Create(size_t size);
+void PlatformMemArena_Destroy(pltMemArena* arena);
 
-void PltMemArena_Reset(pltMemArena* arena);
-void PltMemArena_Alloc(pltMemArena* arena, size_t size, size_t alignment);
+void PlatformMemArena_Reset(pltMemArena* arena);
+void* PlatformMemArena_Alloc(pltMemArena* arena, size_t size, size_t alignment);
 
 
 // Client memory arena -> Go client-server eventually
 #define PLT_MEM_ARENA_GSIZE ( (size_t) 32768 )
-extern pltMemArena* gMemArena;
+extern pltMemArena* gPltMem;
 
 
 // Cross platform allocation
@@ -37,6 +37,9 @@ extern pltMemArena* gMemArena;
 #define ALIGNED_FREE(ptr)  _aligned_free((ptr))
 
 #else
+
+#include <stdlib.h>
+#include <string.h>
 
 static inline void* aligned_new(size_t size, size_t alignment) {
     void* ptr = NULL;

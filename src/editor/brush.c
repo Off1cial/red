@@ -4,6 +4,8 @@
 #include "engine/mesh.h"
 #define TINY_LIMIT 0.01F
 
+brush_t* gBrushes = NULL;
+
 winding_t* NewWinding(int numpoints)
 {
   if (numpoints >= WINDING_MAX_POINTS)
@@ -334,6 +336,8 @@ brush_t* Brush_Create(vec3_t mins, vec3_t maxs)
 
   // Build brush
   Brush_Build(out);
+
+  printf("[EDITOR][BRUSH]: Brush created\n");
   return out;
 }
 

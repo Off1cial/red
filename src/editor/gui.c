@@ -8,6 +8,7 @@
 #include "editor/gui.h"
 
 
+
 #include <float.h>
 #include <stdio.h>
 
@@ -153,6 +154,9 @@ static void DrawPanel_Tools()
     if (UI_Button("Button", brect))
     {
       printf("Clicked\n");
+      vec3_t min = {-10, -10, -10};
+      vec3_t max = {10, 10, 10};
+      ECMD_BrushCreate(min, max);
     }
   }
   UI_End();
