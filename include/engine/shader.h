@@ -74,3 +74,9 @@ void CBaseShader_SetInt(CBaseShader* shader, CBaseShaderLocType loctype, int dat
 
 void CBaseShader_SetFloat(CBaseShader* shader, CBaseShaderLocType loctype, float f);
 
+
+extern CBaseShader* gShader_current;
+
+#ifdef EDITOR_BUILD
+extern CBaseShader* gEditorShader_brush;
+#endif

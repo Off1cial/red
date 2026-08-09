@@ -8,7 +8,7 @@ typedef struct rendercommand_t
 {
   
   uint64_t key; // Packed
-  uint32_t mesh_handle;
+  uint32_t mesh_handle; // vbo, ebo, vao
   uint32_t material_handle;
   mat4 transform; 
 

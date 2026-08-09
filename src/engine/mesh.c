@@ -38,6 +38,11 @@ void CBaseMesh_Destroy(CBaseMesh* mesh)
   free(mesh);
 }
 
+void CBaseMesh_Reset(CBaseMesh* mesh)
+{
+  mesh->vertexcount = 0; mesh->indexcount = 0;
+}
+
 static void GenerateBuffers(CBaseMesh* mesh)
 {
   glGenVertexArrays(1, &mesh->vao);
@@ -125,7 +130,7 @@ void CBaseMesh_PushTriangleIndices(
   assert(mesh && mesh->indices);
   
   // Grow index array
-  if (mesh->indexcount >= mesh->indexcap)
+  if (mesh->indexcount + 3 >= mesh->indexcap)
   {
     mesh->indexcap *= 2;
     mesh->indices = realloc(

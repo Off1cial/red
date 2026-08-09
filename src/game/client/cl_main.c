@@ -149,12 +149,13 @@ int main()
   double timestamp = pltTime_Time();
   int quit = 0;
   int con_attempts = 0;
+  SDL_GL_SetSwapInterval(1);
   while(!quit)
   {
 
     double time = pltTime_Time();
     double dt = time - timestamp;
-
+    float fps = 1 /dt;
 
 
 
@@ -186,7 +187,7 @@ int main()
     UIRECT_NULL(rect);
     rgba texcol = {255, 53, 180, 255};
     char speedbuff[32];
-    snprintf(speedbuff, 32, "%0.1f", speed);
+    snprintf(speedbuff, 32, "%0.1f", fps);
     UI_AddText(speedbuff, 0, 80, 30, texcol);
     if (UI_Begin("Window", windowrect, 0))
     {

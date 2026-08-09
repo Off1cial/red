@@ -5,9 +5,13 @@
 #include <string.h>
 #include <assert.h>
 
+
+CBaseShader* gShader_current;
+
 void CBaseShader_Use(CBaseShader* shader)
 {
   glUseProgram(shader->program);
+  gShader_current = shader;
 }
 
 void CBaseShader_Destroy(CBaseShader* shader)
@@ -148,7 +152,7 @@ CBaseShader* CBaseShader_Create(const char* vert, const char* frag)
     free(s);
     return NULL;
   }
-  //DisplayUniforms(s);
+  DisplayUniforms(s);
   return s;
 }
 

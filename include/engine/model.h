@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "corebase/mathlib.h"
 #include "engine/mesh.h"
+#include "engine/texture.h"
 
 #define MDL_MAGIC 0x4C444D43 // "CMDL" as a uint32, little-endian
 #define MDL_VERSION 1
@@ -43,3 +44,12 @@ uint8_t ModelFile_GetModel(const char* path, model_t* out, mdlheader_t* headerou
 void ModelFile_Free(modelfile_t *mdl);
 
 extern model_t testmodel;
+
+typedef struct surface_s
+{
+  plane_t plane;
+  surface_t* texturechain; // Next surface of the same texture 
+} surface_t;
+
+
+

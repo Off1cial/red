@@ -28,6 +28,8 @@ extern vec3_t VEC_ZERO;
 #define RAD(x) ((x) * (M_PI / 180.0f))
 #define DEG(x) ((x) * (180.0f / M_PI))
 
+
+  
 #define EPSILON 1e-6f
 
 // Angle indexes
@@ -167,11 +169,11 @@ static inline void VectorCrossNorm(
   VectorNormalise(cross);
 }
 
-static inline void VectorScale(vec3_t v, float scale)
+static inline void VectorScale(vec3_t v, float scale, vec3_t out)
 {
-  v[0] *= scale;
-  v[1] *= scale;
-  v[2] *= scale;
+  out[0] = v[0] * scale;
+  out[1] = v[1] * scale;
+  out[2] = v[2] * scale;
 }
 
 // 2D vectors
@@ -354,6 +356,19 @@ static inline void PlaneNormalise(plane_t* plane)
   plane->normal[2] = -plane->normal[2];
 }
 
+
+
+
+#include <stdio.h>
+static inline void vec3print(vec3_t v)
+{
+  printf("[%0.2f, %0.2f, %0.2f]\n", v[0], v[1], v[2]);
+}
+
+static inline void vec2print(vec2_t v)
+{
+  printf("[%0.2f, %0.2f]\n", v[0], v[1]);
+}
 
 #include <stdint.h>
 

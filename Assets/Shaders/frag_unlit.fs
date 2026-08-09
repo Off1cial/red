@@ -37,5 +37,5 @@ void main()
 
     //FragColour = vec4(vUV, 0.0, 1.0);
 
-    FragColour = vColour;
+    //FragColour = vColour;
 }

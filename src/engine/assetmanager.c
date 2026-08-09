@@ -36,6 +36,29 @@ static inline int NameFromPath(const char *path, char *out)
   return 1;
 }
 
+uint32_t AssetManager_AddShader(const char* vpath, const char* fpath)
+{
+  if (!vpath || !fpath) return (u32)-1;
+
+  assetShader_t shaderasset;
+  assethandle_t shaderhandle;
+  char v_abspath[256];
+  ResolveAssetPath(vpath, v_abspath, 256);
+  Q_strncpy(shaderasset.path, vpath, 256);
+  
+  
+
+  shaderasset.shader = CBaseShader_Create(vpath, fpath);
+  shaderhandle.index = gAssetManager->shaders.count;
+  shaderasset.handle = shaderhandle;
+
+  gAssetManager->shaders.shaders[shaderasset.handle.index] = shaderasset;
+  gAssetManager->shaders.count++;
+  
+  return shaderhandle.index;
+}
+
+
 uint32_t AssetManager_AddTexture(const char *path)
 {
   if (gAssetManager->textures.count >= ASSETS_MAX_TEXTURES)
@@ -44,11 +67,16 @@ uint32_t AssetManager_AddTexture(const char *path)
     return (uint32_t)-1;
   }
 
+  char abspath[256];
+  ResolveAssetPath(path, abspath, 256);
   int width, height, channels;
-  byte *pixels = stbi_load(path, &width, &height, &channels, 0);
+  byte *pixels = stbi_load(abspath, &width, &height, &channels, 0);
+
   if (!pixels)
   {
-    printf("[ASSETS][TEXTURE]: Failed to load texture data, %s\n", path);
+    printf("[ASSETS][TEXTURE]: Failed to load texture\n");
+    printf("[ASSETS][TEXTURE]: Path: %s\n", abspath);
+    printf("[ASSETS][TEXTURE]: STB: %s\n", stbi_failure_reason());
     return (uint32_t)-1;
   }
 
@@ -186,7 +214,9 @@ uint8_t AssetManager_AddFont(const char *path, int size)
   ResolveAssetPath("Fonts/font_atlas.bmp", texpath, sizeof(texpath));
   SDL_SaveBMP(atlas, texpath);
 
-  uint32_t texhandle = AssetManager_AddTexture(texpath);
+  uint32_t texhandle = AssetManager_AddTexture("Fonts/font_atlas.bmp");
+
+
   SDL_DestroySurface(atlas);
   TTF_CloseFont(ttf_font);
 
@@ -253,6 +283,7 @@ uint8_t AssetManager_Init()
     return 0;
 
   memset(gAssetManager, 0, sizeof(CBaseAssetManager));
+  gAssetManager->textures.count = 1; // Reserve 0 for no texture
 
   TTF_Init();
 
@@ -262,6 +293,7 @@ uint8_t AssetManager_Init()
   //ModelFile_Write("Models/obj/isosphere.obj", "Textures/dev.png", "Models/mdl/isosphere.mdl");
   //ModelFile_Write("Models/obj/donut.obj", "Textures/dev.png", "Models/mdl/donut.mdl");
   AssetManager_LoadModel("Models/mdl/cube.mdl", &testmodel);
+  AssetManager_AddTexture("Textures/dev.png");
 
   return 1;
 }

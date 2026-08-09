@@ -286,7 +286,7 @@ uint8_t ModelFile_Write(const char *objsource, const char *texpath, const char *
   header.version = MDL_VERSION;
   header.vertcount = vertcount;
   header.indexcount = indexcount;
-  strncpy(header.texpath, abstextpath, sizeof(header.texpath) - 1);
+  strncpy(header.texpath, texpath, sizeof(header.texpath) - 1);
 
   size_t written = 0;
   written += fwrite(&header, sizeof(mdlheader_t), 1, dest);

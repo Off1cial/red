@@ -18,15 +18,7 @@
 #define PANELSIDE_STR "Side (z/y)"
 #define PANELTOOLS_STR "Tools"
 
-typedef enum paneltype_t
-{
-  PANEL_TOP,
-  PANEL_FRONT,
-  PANEL_SIDE,
-  PANEL_TOOLS, // KEEP THIS ORDER
-  PANEL_3D,
-  PANEL_COUNT
-} paneltype_t;
+
 
 // How many world units the space between grid lines represent
 static float gGridSizes[] =
@@ -59,6 +51,15 @@ u64 PanelFlags =
   UIWindowFlag_NoTitleBar;
 
 #define EDITORUI_TOOLSWIDTH 0.25  // The tools panel occupies 1/4 of the screen's width
+                                  //
+static void Vec2Clamp2Rect(vec2_t in, rectdef rect, vec2_t out)
+{
+  out[0] = fmaxf(rect[0], out[0]);
+  out[1] = fmaxf(rect[1], out[1]);
+
+  out[0] = fminf(rect[0] + rect[2], out[0]);
+  out[1] = fminf(rect[1] + rect[3], out[1]);
+}
 
 static uint8_t ui_rectcontained(rectdef rect, float x, float y)
 {
@@ -145,6 +146,40 @@ static void ViewportRect(rectdef rect)
 {
   glViewport(rect[0], rect[1], rect[2], rect[3]);
 }
+// world -> screen, using the panel's 2D projection axes
+static void Panel_WorldToScreen(panel_t* p, vec3_t world, vec2_t out)
+{
+  int ax = p->axis_a;
+  int ay = p->axis_b;
+
+  float zoom = p->camera->fov;          // world units per screen pixel
+  float camx = p->camera->origin[ax];
+  float camy = p->camera->origin[ay];
+
+  float halfw = p->rect[RECT_W] * 0.5f;
+  float halfh = p->rect[RECT_H] * 0.5f;
+
+  out[0] = p->rect[RECT_X] + halfw + (world[ax] - camx) / zoom;
+  out[1] = p->rect[RECT_Y] + halfh - (world[ay] - camy) / zoom;  // flip Y
+}
+
+// screen -> world, using the panel's 2D projection axes
+static void Panel_ScreenToWorld(panel_t* p, float sx, float sy, vec3_t out)
+{
+  int ax = p->axis_a;
+  int ay = p->axis_b;
+
+  float zoom = p->camera->fov;
+  float halfw = p->rect[RECT_W] * 0.5f;
+  float halfh = p->rect[RECT_H] * 0.5f;
+
+  out[ax] = p->camera->origin[ax] + (sx - p->rect[RECT_X] - halfw) * zoom;
+  out[ay] = p->camera->origin[ay] - (sy - p->rect[RECT_Y] - halfh) * zoom;
+
+  // the axis not covered by this panel (depth) has to come from
+  // wherever the caller needs it — e.g. camera->origin[thirdaxis],
+  // or a fixed grid plane, since orthographic panels drop it entirely
+}
 
 static void DrawPanel_Tools()
 {
@@ -154,18 +189,65 @@ static void DrawPanel_Tools()
     if (UI_Button("Button", brect))
     {
       printf("Clicked\n");
-      vec3_t min = {-10, -10, -10};
-      vec3_t max = {10, 10, 10};
+      vec3_t min = {-4, -4, -4};
+      vec3_t max = {4, 4, 4};
       ECMD_BrushCreate(min, max);
     }
   }
   UI_End();
 }
 
-static void DrawPanel_3D()
+// Iterate brushes, draw for each panel, or iterate panels and draw each brush
+/*
+static void DrawPanelBrushes()
 {
+  brush_t* blist;
+  for (blist = gBrushes; blist; blist=blist->next)
+  {
+    
+  }
 }
+*/
 
+static void DrawPanelBrushes(panel_t* p)
+{
+  int i;
+  
+  brush_t* list = NULL;
+  for (list = gBrushes; list; list=list->next)
+  {
+    brushrender_t* renderable = list->renderable;
+    CBaseMesh* mesh = renderable->mesh;
+    for (i = 0; i + 2 < mesh->indexcount; i += 3)
+    {
+      uint32_t i0 = mesh->indices[i];
+      uint32_t i1 = mesh->indices[i + 1];
+      uint32_t i2 = mesh->indices[i + 2];
+
+      gpuVertex v0 = mesh->vertices[i0];
+      gpuVertex v1 = mesh->vertices[i1];
+      gpuVertex v2 = mesh->vertices[i2];
+      
+      vec2_t s0, s1, s2;
+      Panel_WorldToScreen(p, v0.xyz, s0);
+      Panel_WorldToScreen(p, v1.xyz, s1);
+      Panel_WorldToScreen(p, v2.xyz, s2);
+    
+      //printf("s0: "); vec2print(s0);
+      //printf("s1: "); vec2print(s1);
+      //printf("s2: "); vec2print(s2);
+      Vec2Clamp2Rect(s0, p->rect, s0);
+      Vec2Clamp2Rect(s1, p->rect, s1);
+      Vec2Clamp2Rect(s2, p->rect, s2);
+
+      u32 linecol = COL32(20, 255, 20, 160);
+
+      UI_DrawLine(s0, s1, linecol, 1.0f);
+      UI_DrawLine(s0, s2, linecol, 1.0f);
+      UI_DrawLine(s2, s1, linecol, 1.0f);
+    }
+  }
+}
 
 static void DrawPanelGrid(panel_t* p)
 {
@@ -190,11 +272,13 @@ static void DrawPanelGrid(panel_t* p)
   float startx = floorf(minx / grid) * grid;
   float starty = floorf(miny / grid) * grid;
 
-  u32 gridcol = 0xFFFFFF44; // fainter — see note below
+  u32 gridcol = COL32(80, 80, 80, 255); // fainter — see note below
 
   for (float x = startx; x <= maxx; x += grid)
   {
+
     float sx = p->rect[0] + (x - minx) / zoom;   // world -> screen
+    if (sx < p->rect[0] || sx >= p->rect[0] + p->rect[2]) continue;
 
     vec2_t a, b;
     a[0] = sx; a[1] = p->rect[1];
@@ -206,6 +290,7 @@ static void DrawPanelGrid(panel_t* p)
   {
     // world Y increases "up", screen Y increases downward — flip
     float sy = p->rect[1] + p->rect[3] - (y - miny) / zoom;
+    if (sy < p->rect[1] || sy >= p->rect[1] + p->rect[3]) continue;
 
     vec2_t a, b;
     a[0] = p->rect[0]; a[1] = sy;
@@ -218,7 +303,7 @@ static void DrawPanelGrid(panel_t* p)
 
 static void DrawPanel(panel_t* p)
 {
-  clampf(&p->camera->fov, 10.0f, 90.0f);
+  clampf(&p->camera->fov, 0.1f, 10.0f);
   if (UI_Begin(p->name, p->rect, PanelFlags))
   {
     u8 hovered = 
@@ -226,11 +311,11 @@ static void DrawPanel(panel_t* p)
     if (hovered) gHoveredPanel = p->type;
 
     DrawPanelGrid(p);
+
+    DrawPanelBrushes(p);
   }
 
   UI_End();
-
-  // Draw top,side,front panels
 }
 
 void GUI_Draw()
@@ -242,6 +327,4 @@ void GUI_Draw()
   {
     DrawPanel(&gPanels[i]);
   }
-  DrawPanel_3D();
-
 }

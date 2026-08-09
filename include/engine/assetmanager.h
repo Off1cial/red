@@ -7,7 +7,7 @@
 
 #define ASSETS_MAX_MESHES 256
 #define ASSETS_MAX_MODELS 256
-#define ASSETS_MAX_TEXTURES 256
+#define ASSETS_MAX_TEXTURES 32
 #define ASSETS_MAX_MATERIALS 512
 #define ASSETS_MAX_SHADERS 64
 #define ASSETS_MAX_FONT_GLYPHS 128
@@ -61,9 +61,10 @@ struct _materialregistry
 
 typedef struct assetShader_t
 {
+  // Make file structure to have my own shader type that has fragment and vertex??
   char           path[256];
   assethandle_t  handle;
-  CBaseShader    shader;
+  CBaseShader*    shader;
   assetstate_t   state;
 } assetShader_t;
 
@@ -141,7 +142,7 @@ extern CBaseAssetManager *gAssetManager;
 uint8_t AssetManager_AddFont(const char *path, int size);
 uint32_t AssetManager_AddTexture(const char *path);
 uint32_t AssetManager_AddModel(const char* path);
-
+uint32_t AssetManager_AddShader(const char* vpath, const char* fpath);
 
 uint32_t AssetManager_GetFontID(const char *name);
 uint8_t AssetManager_LoadModel(const char* path, model_t* out);

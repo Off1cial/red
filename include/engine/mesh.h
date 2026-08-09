@@ -33,6 +33,8 @@ CBaseMesh*    CBaseMesh_Create(int vertexcount, int indexcount);
 
 void          CBaseMesh_Destroy(CBaseMesh* mesh);
 
+void CBaseMesh_Reset(CBaseMesh* mesh);
+
 unsigned int  CBaseMesh_PushVertex(CBaseMesh* mesh, gpuVertex v);
 
 
