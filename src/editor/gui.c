@@ -1,10 +1,12 @@
 #include "engine/ui/ui.h"
+#include "engine/ui/ui_draw.h"
 #include "engine/camera.h"
 #include "platform/window.h"
 #include "platform/input.h"
 #include "platform/common.h"
 
 #include "editor/editor.h"
+#include "editor/brush.h"
 #include "editor/gui.h"
 
 
@@ -17,25 +19,11 @@
 #define PANELFRONT_STR "Front (x/y)"
 #define PANELSIDE_STR "Side (z/y)"
 #define PANELTOOLS_STR "Tools"
+#define PANELCONTEXT_STR "Context"
 
 
 
-// How many world units the space between grid lines represent
-static float gGridSizes[] =
-{
-  1.0f,
-  10.0f,
-  100.0f,
-  1000.0f,
-};
 
-enum
-{
-  GRID_SMALL,
-  GRID_MED,
-  GRID_LARGE,
-  GRID_HUGE,
-};
 
 typedef enum { AXIS_X, AXIS_Y, AXIS_Z } PANEL_AXIS;
 
@@ -43,15 +31,17 @@ int gGridLevel = GRID_MED;
 
 
 
-panel_t gPanels[5];
+panel_t gPanels[6];
 u64 PanelFlags =
   UIWindowFlag_NoCollapse |
   UIWindowFlag_NoMove |
   UIWindowFlag_NoResize |
   UIWindowFlag_NoTitleBar;
 
-#define EDITORUI_TOOLSWIDTH 0.25  // The tools panel occupies 1/4 of the screen's width
-                                  //
+#define EDITORGUI_CONTEXTSWIDTH 0.25  // The context panel occupies 1/4 of the screen's width
+#define EDITORGUI_TOOLSWIDTH (EDITORGUI_CONTEXTSWIDTH / 2)
+
+
 static void Vec2Clamp2Rect(vec2_t in, rectdef rect, vec2_t out)
 {
   out[0] = fmaxf(rect[0], out[0]);
@@ -72,6 +62,10 @@ static uint8_t ui_rectcontained(rectdef rect, float x, float y)
       );
 }
 
+static void rectprint(rectdef rect)
+{
+  printf("(%0.2f, %0.2f, %0.2f, %0.2f)\n", rect[RECT_X], rect[RECT_Y], rect[RECT_W], rect[RECT_H]);
+}
 
 static void PanelAxes(paneltype_t type, int* axis_a, int* axis_b)
 {
@@ -84,41 +78,91 @@ static void PanelAxes(paneltype_t type, int* axis_a, int* axis_b)
   }
 }
 
-
-
-static void CalculatePanels()
+enum 
 {
+  QUADRANT_TOPLEFT,
+  QUADRANT_TOPRIGHT,
+  QUADRANT_BOTTOMLEFT,
+  QUADRANT_BOTTOMRIGHT
+};
 
-  int toolswidth = gPltWindow->winw * EDITORUI_TOOLSWIDTH;
+static inline void rect_quadrant(rectdef base, u8 quadrant, rectdef out)
+{
+  float quadw = base[RECT_W] / 2.0f;
+  float quadh = base[RECT_H] / 2.0f;
+  float basex = base[RECT_X];
+  float basey = base[RECT_Y];
+  out[RECT_W] = quadw;
+  out[RECT_H] = quadh;
+  switch (quadrant)
+  {
+    case QUADRANT_TOPLEFT:
+      out[RECT_X] = basex; out[RECT_Y] = basey;
+      break;
+    case QUADRANT_TOPRIGHT:
+      out[RECT_X] = quadw + basex; out[RECT_Y] = basey;
+      break;
+    case QUADRANT_BOTTOMLEFT:
+      out[RECT_X] = basex; out[RECT_Y] = quadh + basey;
+      break;
+    case QUADRANT_BOTTOMRIGHT:
+      out[RECT_X] = quadw + basex; out[RECT_Y] = quadh + basey;
+      break;
+  }
+  printf("Quadrant %d = ", quadrant); rectprint(out);
+}
+
+void CalculatePanels()
+{
+  
+  int contextwidth = gPltWindow->winw * EDITORGUI_CONTEXTSWIDTH;
+  int toolswidth = gPltWindow->winw * EDITORGUI_TOOLSWIDTH;
+
+  int viewwidth = gPltWindow->winw - (contextwidth + toolswidth);
+  int viewheight = 3 * (viewwidth / 4);
+  int viewheightpadding = gPltWindow->winh - viewheight;
+
+  rectdef viewrect = {toolswidth, viewheightpadding / 2.0f, viewwidth, viewheight};
+  printf("TOOLSWIDHT = %d\n", toolswidth);
   int halfwinh = gPltWindow->winh * 0.5;
-  int toprowwidth = gPltWindow->winw - toolswidth;
-  rectdef rect_3d = {0,0, toprowwidth, halfwinh};
-  rectdef rect_tools = {gPltWindow->winw - toolswidth, 0, toolswidth, gPltWindow->winh};
+  rectdef rect_context = {gPltWindow->winw - contextwidth, 0, contextwidth, gPltWindow->winh};
 
-  rectdef rect_top = {0, halfwinh, toprowwidth * 0.5, halfwinh};
-  rectdef rect_front = {toprowwidth * 0.5, halfwinh, toprowwidth * 0.5, halfwinh};
+  rectdef rect_3d, rect_top, rect_front, rect_side;
+  rect_quadrant(viewrect, QUADRANT_TOPLEFT, rect_3d);
+  rect_quadrant(viewrect, QUADRANT_BOTTOMLEFT, rect_front);
+  rect_quadrant(viewrect, QUADRANT_TOPRIGHT, rect_top);
+  rect_quadrant(viewrect, QUADRANT_BOTTOMRIGHT, rect_side);
+
+  rectdef rect_tools = {0, 0, toolswidth, gPltWindow->winh};
 
   UIRect_Copy(rect_3d, gPanels[PANEL_3D].rect);
   UIRect_Copy(rect_top, gPanels[PANEL_TOP].rect);
   UIRect_Copy(rect_front, gPanels[PANEL_FRONT].rect);
+  UIRect_Copy(rect_side, gPanels[PANEL_SIDE].rect);
+  UIRect_Copy(rect_context, gPanels[PANEL_CONTEXT].rect);
   UIRect_Copy(rect_tools, gPanels[PANEL_TOOLS].rect);
+  UIRect_Copy(gPanels[PANEL_3D].rect, gCamera->viewport);
 }
 
 void GUI_InitialisePanels()
 {
+  memset(gPanels, 0, sizeof(gPanels));
   gPanels[PANEL_3D].type = PANEL_3D;
   gPanels[PANEL_TOP].type = PANEL_TOP;
   gPanels[PANEL_SIDE].type = PANEL_SIDE;
   gPanels[PANEL_FRONT].type = PANEL_FRONT;
   gPanels[PANEL_TOOLS].type = PANEL_TOOLS;
+  gPanels[PANEL_CONTEXT].type = PANEL_CONTEXT;
 
   gPanels[PANEL_3D].name = PANEL3D_STR;
   gPanels[PANEL_TOP].name = PANELTOP_STR;
   gPanels[PANEL_SIDE].name = PANELSIDE_STR;
   gPanels[PANEL_FRONT].name = PANELFRONT_STR;
   gPanels[PANEL_TOOLS].name = PANELTOOLS_STR;
+  gPanels[PANEL_CONTEXT].name = PANELCONTEXT_STR;
   
   CalculatePanels();
+
   gPanels[PANEL_TOP].camera = Camera_Create(VEC_ZERO, VEC_AXIS_Y_NEG, (cViewport){0});
 
   gPanels[PANEL_SIDE].camera = Camera_Create(VEC_ZERO, VEC_AXIS_X, (cViewport){0});
@@ -146,44 +190,10 @@ static void ViewportRect(rectdef rect)
 {
   glViewport(rect[0], rect[1], rect[2], rect[3]);
 }
-// world -> screen, using the panel's 2D projection axes
-static void Panel_WorldToScreen(panel_t* p, vec3_t world, vec2_t out)
+
+static void DrawPanel_Context()
 {
-  int ax = p->axis_a;
-  int ay = p->axis_b;
-
-  float zoom = p->camera->fov;          // world units per screen pixel
-  float camx = p->camera->origin[ax];
-  float camy = p->camera->origin[ay];
-
-  float halfw = p->rect[RECT_W] * 0.5f;
-  float halfh = p->rect[RECT_H] * 0.5f;
-
-  out[0] = p->rect[RECT_X] + halfw + (world[ax] - camx) / zoom;
-  out[1] = p->rect[RECT_Y] + halfh - (world[ay] - camy) / zoom;  // flip Y
-}
-
-// screen -> world, using the panel's 2D projection axes
-static void Panel_ScreenToWorld(panel_t* p, float sx, float sy, vec3_t out)
-{
-  int ax = p->axis_a;
-  int ay = p->axis_b;
-
-  float zoom = p->camera->fov;
-  float halfw = p->rect[RECT_W] * 0.5f;
-  float halfh = p->rect[RECT_H] * 0.5f;
-
-  out[ax] = p->camera->origin[ax] + (sx - p->rect[RECT_X] - halfw) * zoom;
-  out[ay] = p->camera->origin[ay] - (sy - p->rect[RECT_Y] - halfh) * zoom;
-
-  // the axis not covered by this panel (depth) has to come from
-  // wherever the caller needs it — e.g. camera->origin[thirdaxis],
-  // or a fixed grid plane, since orthographic panels drop it entirely
-}
-
-static void DrawPanel_Tools()
-{
-  if (UI_Begin("Tools", gPanels[PANEL_TOOLS].rect, PanelFlags))
+  if (UI_Begin("Context", gPanels[PANEL_CONTEXT].rect, PanelFlags))
   {
     rectdef brect; UIRECT_NULL(brect);
     if (UI_Button("Button", brect))
@@ -209,16 +219,32 @@ static void DrawPanelBrushes()
 }
 */
 
+static void DrawBrushProgress(panel_t* p)
+{
+  vec2_t scr_a, scr_b;
+  Panel_WorldToScreen(p, gBrushDraw.a, scr_a);
+  Panel_WorldToScreen(p, gBrushDraw.b, scr_b);
+
+  rectdef rect;
+  rect[RECT_X] = fminf(scr_a[0], scr_b[0]);
+  rect[RECT_Y] = fminf(scr_a[1], scr_b[1]);
+
+  rect[RECT_W] = fabsf(scr_a[0] - scr_b[0]);
+  rect[RECT_H] = fabsf(scr_a[1] - scr_b[1]);
+  
+
+  UI_DrawRectOutline(rect, COL32(220, 100, 40, 255), 1.0f);
+}
+
 static void DrawPanelBrushes(panel_t* p)
 {
-  int i;
-  
-  brush_t* list = NULL;
-  for (list = gBrushes; list; list=list->next)
+  brush_t* brush = NULL;
+  for (brush = gBrushes; brush; brush = brush->next)
   {
-    brushrender_t* renderable = list->renderable;
-    CBaseMesh* mesh = renderable->mesh;
-    for (i = 0; i + 2 < mesh->indexcount; i += 3)
+    const CBaseMesh* mesh = brush->mesh.mesh;
+    if (NULL == mesh)
+      continue;
+    for (int i = 0; i + 2 < mesh->indexcount; i += 3)
     {
       uint32_t i0 = mesh->indices[i];
       uint32_t i1 = mesh->indices[i + 1];
@@ -308,11 +334,20 @@ static void DrawPanel(panel_t* p)
   {
     u8 hovered = 
       ui_rectcontained(p->rect, gPltInput->mx, gPltInput->my);
-    if (hovered) gHoveredPanel = p->type;
+    if (gHoveredPanel == p->type)
+    {
+      //gHoveredPanel = p->type;
+      UI_AddText(
+          p->name, 0, 
+          p->rect[RECT_X], 
+          p->rect[RECT_Y], 
+          UI_COLOR_WHITE);
+    }
 
     DrawPanelGrid(p);
 
     DrawPanelBrushes(p);
+    if (gBrushDrawing && gHoveredPanel == p->type) DrawBrushProgress(p);
   }
 
   UI_End();
@@ -320,10 +355,10 @@ static void DrawPanel(panel_t* p)
 
 void GUI_Draw()
 {
-  gHoveredPanel = -1;
+  //gHoveredPanel = -1;
   glViewport(0, 0, gPltWindow->winw, gPltWindow->winh);
-  DrawPanel_Tools();
-  for (int i = 0; i < PANEL_TOOLS; i++)
+  DrawPanel_Context();
+  for (int i = 0; i < PANEL_3D; i++)
   {
     DrawPanel(&gPanels[i]);
   }

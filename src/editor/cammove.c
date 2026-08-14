@@ -44,6 +44,6 @@ void Camcmd_act(camera_t* camera, float dt)
   VectorAdd(camera->origin, right, camera->origin);
   VectorAdd(camera->origin, up, camera->origin);
 
-  vec3print(camera->origin);
+  //vec3print(camera->origin);
 
 }

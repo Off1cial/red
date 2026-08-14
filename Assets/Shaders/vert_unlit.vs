@@ -2,7 +2,7 @@
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec3 aColour;
+layout (location = 2) in vec4 aColour;
 layout (location = 3) in vec2 aUV;
 
 uniform mat4 uModel;
@@ -22,7 +22,7 @@ void main()
         uModel *
         vec4(aPos, 1.0);
 
-    vColour = vec4(aColour, 1.0);
+    vColour = aColour;
     vUV = aUV;
     vNormal  = mat3(transpose(inverse(uModel))) * aNormal;
     vPos = vec3(uModel * vec4(aPos, 1.0));

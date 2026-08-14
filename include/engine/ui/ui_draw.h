@@ -13,7 +13,7 @@
 // Currently single colour
 void UI_DrawRect(rectdef rect, float u1, float v1, float u2, float v2, u32 col, GLint texid);
 
-void UI_DrawRectOutline(rectdef rect, rgba col, float thickness);
+void UI_DrawRectOutline(rectdef rect, u32 col32, float thickness);
 
 void UI_DrawTriangle(
     float v0[2], float v1[2], float v2[2],

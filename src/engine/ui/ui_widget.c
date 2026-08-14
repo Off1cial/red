@@ -282,6 +282,20 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   uiwindow_t* win = ui_windownew(name, rect, flags);
   if (!win) return 0;
 
+  if (!ui_rectnull(rect))
+  {
+    if (ui_windowhasflag(win, UIWindowFlag_NoMove))
+    {
+      win->rect[RECT_X] = rect[RECT_X];
+      win->rect[RECT_Y] = rect[RECT_Y];
+    }
+    if (ui_windowhasflag(win, UIWindowFlag_NoResize))
+    {
+      win->rect[RECT_W] = rect[RECT_W];
+      win->rect[RECT_H] = rect[RECT_H];
+    }
+  }
+
   rectdef titlebar;
   float titlebar_h = (flags & UIWindowFlag_NoTitleBar) ? 0.0f : WINDOW_TITLEBAR_HEIGHT;
   if (titlebar_h > 0)
@@ -329,7 +343,7 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   if (resize_hovered && !gUIctx->windowresize && pltInput_MouseClick(0))
     gUIctx->windowresize = win;
 
-  if (gUIctx->windowresize)
+  if (gUIctx->windowresize == win)
   {
     if (pltInput_MouseDown(0))
     {
@@ -394,8 +408,7 @@ uint8_t UI_Begin(const char* name, rectdef rect, uint64_t flags)
   }
   if (!win->collapsed)
   {
-    rgba border = {130, 130, 130, 170};
-    UI_DrawRectOutline(win->rect, border, 1.0f);
+    UI_DrawRectOutline(win->rect, COL32(130, 130, 130, 170), 1.0f);
   }
 
   if (!ui_windowhasflag(win, UIWindowFlag_NoResize))

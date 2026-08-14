@@ -67,25 +67,6 @@ void ECMD_BrushCreate(vec3_t min, vec3_t max)
 }
 
 
-void Editor_BrushCreate(vec3_t mins, vec3_t maxs)
-{
-  brush_t* b = Brush_Create(mins, maxs);
-  Brush_AddToList(b, &gBrushes);
-}
-
-void Editor_BrushDelete(brush_t* b)
-{
-  if (!b)
-  {
-    printf("[EDITOR][BRUSH]: Attempted to delete brush, cmd has no brush!\n");
-    return;
-  }
-
-  Brush_RemoveFromList(b, &gBrushes);
-  Brush_Delete(b);
-}
-
-
 
 
 void ECMD_Execute(ecmd_t* cmd)
@@ -94,12 +75,12 @@ void ECMD_Execute(ecmd_t* cmd)
   {
     case ECMD_BRUSHCREATE:
       printf("ECMD_BRUSHCREATE\n");
-      Editor_BrushCreate(
+      Brush_Create(
           cmd->brush_create.mins, 
           cmd->brush_create.maxs); 
       break;
     case ECMD_BRUSHDELETE:
-      Editor_BrushDelete(cmd->brush);
+      Brush_Delete(&cmd->brush);
       break;
     default:
       printf("ECMD_UNKNOWN\n");

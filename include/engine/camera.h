@@ -39,7 +39,7 @@ void Camera_Look(camera_t* camera, float m_dx, float m_dy, float sens);
 void Camera_Update(camera_t* camera);
 void Camera_Destroy(camera_t* camera);
 
-
+void Camera_Screenray(camera_t* cam, float x, float y, vec3_t outorigin, vec3_t outdir);
 
 #endif
 

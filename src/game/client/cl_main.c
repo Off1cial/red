@@ -85,7 +85,7 @@ int main()
   gPltWindow = win; // clean this up later
   pltInput* input = PlatformInput_Create();
   gPltInput = input;
-
+  
 
   pltTime_Init();
 
@@ -188,7 +188,7 @@ int main()
     rgba texcol = {255, 53, 180, 255};
     char speedbuff[32];
     snprintf(speedbuff, 32, "%0.1f", fps);
-    UI_AddText(speedbuff, 0, 80, 30, texcol);
+    UI_AddText(speedbuff, 0, 80, 30, UI_COLOR_GREEN);
     if (UI_Begin("Window", windowrect, 0))
     {
       if (UI_Button("Button", rect))

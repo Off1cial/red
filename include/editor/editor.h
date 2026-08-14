@@ -2,7 +2,12 @@
 
 #include "corebase/mathlib.h"
 #include "engine/camera.h"
+#include "engine/ui/ui.h"
 #include "engine/assetmanager.h"
+
+
+#define TINY_LIMIT 0.01F
+#define BRUSH_MINSIZE 1.0F // Minimum scale per axis
 
 typedef float rectdef[4];
 
@@ -11,14 +16,14 @@ typedef enum paneltype_t
   PANEL_TOP,
   PANEL_FRONT,
   PANEL_SIDE,
-  PANEL_TOOLS, // KEEP THIS ORDER
   PANEL_3D,
+  PANEL_CONTEXT, // KEEP THIS ORDER, ALL BRUSH-RELATED GO ABOVE THIS
+  PANEL_TOOLS,
   PANEL_COUNT
 } paneltype_t;
 
 typedef struct panel_t
 {
-  // Each holds a vertex array?
   const char* name;
   camera_t* camera;
   rectdef rect;
@@ -26,32 +31,38 @@ typedef struct panel_t
   int axis_a, axis_b;
 } panel_t;
 
+typedef struct brushdraw_t
+{
+  vec3_t a, b;
+} brushdraw_t;
+
+typedef struct winding_s winding_t;
+typedef struct facehighlight_t {
+  CBaseMesh* mesh;
+  winding_t* winding;
+} facehighlight_t;
+
 typedef struct face_s face_t;
 typedef struct brush_s brush_t;
-extern panel_t gPanels[5];
+extern panel_t gPanels[6];
 
 extern int8_t gHoveredPanel;
 extern int gGridLevel;
 
 extern brush_t* gBrushes;
 extern u32 gBrushCount;
+extern brush_t* gHoveredBrush;
+extern int gHoveredBrushFace;
+extern int gHoveredBrushFacePrevious;
 
-extern u8 gHoveredValid;
+extern u8 gHoveredPanelValid;
+extern u8 gBrushDrawing;
+extern brushdraw_t gBrushDraw;
+
+extern facehighlight_t gFaceHighlight;
 
 typedef enum {ECMD_BRUSHCREATE, ECMD_BRUSHDELETE} ecmdtype_t;
 
-// Editor command
-/*
-typedef struct ecmd_t
-{
-  ecmdtype_t type;
-  void* data; // yummy
-  u64 datasize; // so shit, what the fuck am i doing
-
-} ecmd_t;
-
-*/
-// Somewhat better...
 typedef struct ecmd_t
 {
 
@@ -72,88 +83,105 @@ typedef struct ecmd_t
 
 void PanelInput();
 
+// brush.c
+brush_t* Brush_Create(vec3_t mins, vec3_t maxs);
+void Brush_Delete(brush_t** b);
+void Brush_DeleteAll();
+void Brush_SetFaceScale(brush_t* b, int face, float sx, float sy);
 
+
+// Output brushes are allocated by this function, do not pre-allocate
+void Brush_Splice(brush_t* in, const plane_t split, brush_t** front, brush_t** back);
+
+// draw.c
+void R_DrawBrush(brush_t* b);
+void R_DrawBrushes();
+void R_DrawFaceHighlight();
+
+
+// ecmd.c
 void ECMD_BrushCreate(vec3_t min, vec3_t max);
-void ECMD_BrushDelete(brush_t* b);
 
 void ECMD_Init();
 void ECMD_Flush();
 
+
+// gui.c
+void CalculatePanels();
+
+
 #define WINDING_MAX_POINTS 64
 #define BRUSH_MAX_PLANES 64
 
-enum
+enum content_t
 {
   BRUSH_SOLID,
   BRUSH_EMPTY,
   BRUSH_WATER,
 };
 
-typedef struct winding_t
+// How many world units the space between grid lines represent
+
+extern float gGridSizes[];
+
+enum
 {
-  int numpoints;
-  vec3_t points[WINDING_MAX_POINTS];
-} winding_t;
+  GRID_SMALL,
+  GRID_MED,
+  GRID_LARGE,
+  GRID_HUGE,
+};
 
-typedef struct brushmaterial_t
+
+
+// world -> screen, using the panel's 2D projection axes
+static void Panel_WorldToScreen(panel_t* p, vec3_t world, vec2_t out)
 {
-  u32 texhandle;
-  vec3_t uaxis, vaxis;
-  vec2_t shift;
-  vec2_t scale;
-} brushmaterial_t;
+  int ax = p->axis_a;
+  int ay = p->axis_b;
 
+  float zoom = p->camera->fov;          // world units per screen pixel
+  float camx = p->camera->origin[ax];
+  float camy = p->camera->origin[ay];
 
+  float halfw = p->rect[RECT_W] * 0.5f;
+  float halfh = p->rect[RECT_H] * 0.5f;
 
-typedef struct face_s
+  out[0] = p->rect[RECT_X] + halfw + (world[ax] - camx) / zoom;
+  out[1] = p->rect[RECT_Y] + halfh - (world[ay] - camy) / zoom;  // flip Y
+}
+
+// screen -> world, using the panel's 2D projection axes
+static void Panel_ScreenToWorld(panel_t* p, float sx, float sy, vec3_t out)
 {
-  plane_t plane;
-  winding_t* winding;
-  brushmaterial_t material;
+  int ax = p->axis_a;
+  int ay = p->axis_b;
 
-} face_t;
+  float zoom = p->camera->fov;
+  float halfw = p->rect[RECT_W] * 0.5f;
+  float halfh = p->rect[RECT_H] * 0.5f;
 
+  out[ax] = p->camera->origin[ax] + (sx - p->rect[RECT_X] - halfw) * zoom;
+  out[ay] = p->camera->origin[ay] - (sy - p->rect[RECT_Y] - halfh) * zoom;
 
-typedef struct brushrender_t
+  // the axis not covered by this panel (depth) has to come from
+  // wherever the caller needs it — e.g. camera->origin[thirdaxis],
+  // or a fixed grid plane, since orthographic panels drop it entirely
+}
+
+static float CurrentGridSize(float zoom)
 {
-  CBaseMesh* mesh;
-  int old; // Recompute mesh
-} brushrender_t;
+  int level = gGridLevel;
+  float grid = gGridSizes[level];
+  while ((grid / zoom) < 16.0f && level < GRID_HUGE)
+    grid = gGridSizes[++level];
+  return grid;
+}
 
 
 
 
 
-typedef struct brush_s
-{
-  struct brush_s *next, *prev;
-  u8 contents;
-  vec3_t mins, maxs;
-  u32 facecount;
-  face_t faces[BRUSH_MAX_PLANES];
-
-  // Rendering data
-  brushrender_t* renderable;
-} brush_t;
 
 
 
-
-// Render surface
-
-typedef struct rsurfbatch_t
-{
-  u32 texhandle;
-  CBaseMesh* mesh;
-  int old;  
-
-} rsurfbatch_t;
-
-// Accessed by texture handles
-extern rsurfbatch_t gSurfbatches[ASSETS_MAX_TEXTURES];
-extern u32 gUniqueTexs; // Number of different textures being used 
-
-void FaceUVpoint(face_t* f, vec3_t p, vec2_t out);
-
-void rsurfbatch_addface(face_t f);
-void rsurfbatch_reset(u32 texhandle);

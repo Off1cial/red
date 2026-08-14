@@ -283,17 +283,17 @@ uint8_t AssetManager_Init()
     return 0;
 
   memset(gAssetManager, 0, sizeof(CBaseAssetManager));
-  gAssetManager->textures.count = 1; // Reserve 0 for no texture
+  gAssetManager->textures.count = 0; // Reserve 0 for no texture
 
   TTF_Init();
 
-  AssetManager_AddFont("Fonts/Roboto.ttf", 40);
+  printf("DEV HANDLE = %d\n", AssetManager_AddTexture("Textures/dev.png"));
+  AssetManager_AddFont("Fonts/Roboto.ttf", 20);
 
   ModelFile_Write("Models/obj/cube.obj", "Textures/dev.png", "Models/mdl/cube.mdl");
   //ModelFile_Write("Models/obj/isosphere.obj", "Textures/dev.png", "Models/mdl/isosphere.mdl");
   //ModelFile_Write("Models/obj/donut.obj", "Textures/dev.png", "Models/mdl/donut.mdl");
   AssetManager_LoadModel("Models/mdl/cube.mdl", &testmodel);
-  AssetManager_AddTexture("Textures/dev.png");
 
   return 1;
 }

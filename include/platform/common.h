@@ -14,7 +14,7 @@
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE )
 
 #define COLOR_BLACK		'0'
-#define COLOR_RED		'1'
+#define COLOR_RED		  '1'
 #define COLOR_GREEN		'2'
 #define COLOR_YELLOW	'3'
 #define COLOR_BLUE		'4'
@@ -43,6 +43,7 @@
 ({ __typeof__ (a) _a = (a); \
     __typeof__ (b) _b = (b); \
     _a < _b ? _a : _b; })
+
 
 #define CLAMP(v, lb, ub)  ( MAX(lb, MIN(v, ub)) )
 

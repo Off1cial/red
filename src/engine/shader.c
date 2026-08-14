@@ -129,6 +129,19 @@ static int Shader_Load(CBaseShader* shader, const char* vertPath, const char* fr
   shader->uniforms[SH_UNIFORM_USE_TEXTURE] =
     glGetUniformLocation(shader->program, "uUseTexture");
 
+  // Extras
+  shader->uniforms[SH_UNIFORM_COLOUR] =
+    glGetUniformLocation(shader->program, "uColour");
+
+  shader->uniforms[SH_UNIFORM_USE_FOG] = 
+    glGetUniformLocation(shader->program, "uUseFog");
+  shader->uniforms[SH_UNIFORM_FOG_START] =
+    glGetUniformLocation(shader->program, "uFogStart");
+  shader->uniforms[SH_UNIFORM_FOG_STRENGTH] =
+    glGetUniformLocation(shader->program, "uFogStrength");
+  shader->uniforms[SH_UNIFORM_FOG_COL] = 
+    glGetUniformLocation(shader->program, "uFogCol");
+
   shader->srcVertex = vertPath;
   shader->srcFrag = fragPath;
   return 1;

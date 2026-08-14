@@ -235,7 +235,7 @@ static inline void UI_AddChar(const char c, uint32_t fontid, float posx, float p
 
 }
 
-void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba colour)
+void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, u32 col)
 {
   // Find the batch for this font
   ui_textbatch_t* batch = NULL;
@@ -284,11 +284,10 @@ void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba 
 
 
     uivertex_t v0, v1, v2, v3;
-    uivertex_setcolour(&v0, colour);
-    uivertex_setcolour(&v1, colour);
-    uivertex_setcolour(&v2, colour);
-    uivertex_setcolour(&v3, colour);
-    
+    v0.col = col;
+    v1.col = col;
+    v2.col = col;
+    v3.col = col;
     //UI_ScreenToNDC(x0, y0, v0.pos);
     //UI_ScreenToNDC(x1, y0, v1.pos);
     //UI_ScreenToNDC(x1, y1, v2.pos);
@@ -468,7 +467,7 @@ void UI_DrawRect(
   UI_PushTriangle(i0, i2, i3);
 }
 
-void UI_DrawRectOutline(rectdef rect, rgba col, float thickness)
+void UI_DrawRectOutline(rectdef rect, u32 col32, float thickness)
 {
     rectdef top = {
         rect[RECT_X],
@@ -498,7 +497,6 @@ void UI_DrawRectOutline(rectdef rect, rgba col, float thickness)
         rect[RECT_H]
     };
 
-    u32 col32 = RGBA_32(col);
     UI_DrawRect(top,    0, 0, 1, 1, col32, -1);
     UI_DrawRect(bottom, 0, 0, 1, 1, col32, -1);
     UI_DrawRect(left,   0, 0, 1, 1, col32, -1);

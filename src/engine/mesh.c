@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "corebase/mathlib.h"
 #include "platform/common.h"
 
 static CBaseMesh* CBaseMesh_Alloc(int vertexcap, int indexcap)
@@ -85,7 +86,7 @@ void CBaseMesh_Upload(CBaseMesh* mesh, GLenum usage)
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(gpuVertex), (void*)OFFSETOF(gpuVertex, normal));
   // colour
   glEnableVertexAttribArray(2);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(gpuVertex), (void*)OFFSETOF(gpuVertex, col));
+  glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(gpuVertex), (void*)OFFSETOF(gpuVertex, col));
   // uv
   glEnableVertexAttribArray(3);
   glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(gpuVertex), (void*)OFFSETOF(gpuVertex, uv));
@@ -159,6 +160,24 @@ void CBaseMesh_PushTriangleVerts(
   GLuint i2 = CBaseMesh_PushVertex(mesh, v2);
   
   CBaseMesh_PushTriangleIndices(mesh, i0, i1, i2);
+}
+
+
+void CBaseMesh_Print(CBaseMesh* mesh) {
+  if (!mesh)
+    return;
+  printf("[MESH]: Print mesh\n");
+  printf("Vertices\n");
+  for (int v = 0; v < mesh->vertexcount; v++)
+  {
+    printf("Position: "); vec3print(mesh->vertices[v].xyz);
+    printf("Normal: "); vec3print(mesh->vertices[v].normal);
+    printf("Colour: "); vec3print(mesh->vertices[v].col);
+    printf("UV:"); vec2print(mesh->vertices[v].uv);
+  }
+  printf("VAO = %d\n", mesh->vao);
+  printf("VBO = %d\n", mesh->vbo);
+  printf("EBO = %d\n", mesh->ebo);
 }
 
 

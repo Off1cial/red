@@ -12,10 +12,9 @@
 
 #include "editor/editor.h"
 #include "editor/gui.h"
-#include "editor/draw.h"
-
 #include "editor/cammove.h"
 
+float cl_updaterate = 1.0f / 128.0f;
 
 int8_t gHoveredPanel = -1;
 
@@ -27,12 +26,13 @@ int main()
 
 
 
-  pltWindow* Window = PlatformWindow_Create(640, 480, "Editor");
+  pltWindow* Window = PlatformWindow_Create(800, 600, "Editor");
   pltInput* PltInput   = PlatformInput_Create();
   pltMemArena* MemArena = PlatformMemArena_Create(PLT_MEM_ARENA_GSIZE);
   gPltWindow = Window; gPltInput = PltInput; gPltMem = MemArena;
 
 
+  Mat4Identity(MAT4_IDENTITY); // Move this to init
   camera_t* camera = Camera_Create(
       VEC_ZERO, 
       VEC_AXIS_Z, 
@@ -45,10 +45,9 @@ int main()
   pltTime_Init();
   AssetManager_Init();
   
-  CBaseShader* gEditorShader_brush = CBaseShader_Create(
+  gEditorShader_brush = CBaseShader_Create(
       "../Assets/Shaders/vert_unlit.vs", "../Assets/Shaders/frag_unlit.fs");
     
-  Mat4Identity(MAT4_IDENTITY); // Move this to init
   ECMD_Init();
   UI_Init();
   GUI_Initialise();
@@ -66,18 +65,24 @@ int quit = 0;
     double dt = time - timestamp;
     accumulator += dt;
     timestamp = time;
-    gHoveredValid = (gHoveredPanel != -1);  
+    gHoveredPanelValid = (gHoveredPanel != -1);  
 
 
     PlatformInput_Poll(gPltWindow->window, gPltInput, &quit);
     Camcmd_prepare();
 
-    if (accumulator >= 1.0f / 64)
+    if (accumulator >= cl_updaterate)
     {
-      Camcmd_act(camera, dt);
-      accumulator -= (1.0 / 64);
+      Camcmd_act(camera, cl_updaterate);
+      accumulator -= cl_updaterate;
     }
-
+    if (gPltInput->eventWindowResized)
+    {
+      gPltWindow->winw = gPltInput->eventWindowNewWidth;
+      gPltWindow->winh = gPltInput->eventWindowNewHeight;
+      CalculatePanels();
+    }
+    gHoveredPanel = -1;
     
     PanelInput();
     
@@ -106,8 +111,9 @@ int quit = 0;
     CBaseShader_SetMat4(gEditorShader_brush, SH_UNIFORM_VIEW, camera->view);
     CBaseShader_SetMat4(gEditorShader_brush, SH_UNIFORM_PROJECTION, camera->projection);
     CBaseShader_SetMat4(gEditorShader_brush, SH_UNIFORM_MODEL,  MAT4_IDENTITY);
-    //R_DrawBrushes(gBrushes);
-    R_DrawSurfaces();
+    if (gBrushCount > 0) {
+      R_DrawBrushes();
+    }
 
 
     while (glGetError() != GL_NO_ERROR)
@@ -116,6 +122,7 @@ int quit = 0;
     SDL_GL_SwapWindow(gPltWindow->window);
 
   }
+  Brush_DeleteAll();
   PlatformInput_Destroy(gPltInput);
   PlatformWindow_Destroy(gPltWindow);
 }

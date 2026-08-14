@@ -7,7 +7,7 @@ typedef struct CBASE_VERTEX
 {
   float xyz[3];
   float normal[3];
-  float col[3];
+  float col[4];
   float uv[2];
 } gpuVertex;
 
@@ -64,3 +64,4 @@ void CBaseMesh_PushTriangleVerts(
 
 void CBaseMesh_Upload(CBaseMesh* mesh, GLenum usage);
 void CBaseMesh_Draw(CBaseMesh* mesh, GLenum primitive);
+void CBaseMesh_Print(CBaseMesh* mesh);

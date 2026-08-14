@@ -67,10 +67,10 @@ typedef struct uistyle_t
 
 typedef enum uiwindowflag_t
 {
-  UIWindowFlag_NoMove     = 0,
-  UIWindowFlag_NoResize   = 1,
-  UIWindowFlag_NoCollapse = 2,
-  UIWindowFlag_NoTitleBar = 4,
+  UIWindowFlag_NoMove     = 1,
+  UIWindowFlag_NoResize   = 2,
+  UIWindowFlag_NoCollapse = 4,
+  UIWindowFlag_NoTitleBar = 8,
 } uiwindowflag_t;
 
 #define UIWindowFlag_All ((uint64_t)-1)
@@ -146,7 +146,7 @@ extern uicontext_t* gUIctx;
 uint8_t UI_Init();
 
 // ui_draw.c
-void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, rgba colour);
+void UI_AddText(const char* text, uint32_t fontid, float posx, float posy, u32 col);
 
 
 void UI_DrawLine(vec2_t a,vec2_t b, u32 col,float thickness);

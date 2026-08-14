@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include "platform/common.h"
 #include <string.h>
 
 typedef float vec_t;
@@ -10,6 +11,10 @@ typedef float vec_t;
 typedef vec_t vec4_t[4];
 typedef vec_t vec3_t[3];
 typedef vec_t vec2_t[2];
+
+typedef struct { vec3_t origin; vec3_t dir; } ray_t;
+typedef struct { vec3_t a; vec3_t b; } line3_t;
+typedef struct { vec2_t a; vec2_t b; } line2_t;
 
 extern vec3_t VEC_AXIS_X;
 extern vec3_t VEC_AXIS_Y;
@@ -108,7 +113,7 @@ static inline float DotProduct(
     const vec3_t b)
 {
   return a[0] * b[0] +
-         a[1] * b[1] +
+      a[1] * b[1] +
          a[2] * b[2];
 }
 
@@ -176,6 +181,13 @@ static inline void VectorScale(vec3_t v, float scale, vec3_t out)
   out[2] = v[2] * scale;
 }
 
+static inline void VectorMA(vec3_t a, float t, vec3_t b, vec3_t out)
+{
+  out[0] = a[0] + t * b[0];
+  out[1] = a[1] + t * b[1];
+  out[2] = a[2] + t * b[2];
+}
+
 // 2D vectors
 
 static inline void Vector2Add(
@@ -204,6 +216,28 @@ static inline void Vector2Copy(
   dst[1] = v[1];
 }
 
+
+static inline void VectorMins(vec3_t a, vec3_t b, vec3_t out)
+{
+  out[0] = MIN(a[0], b[0]);
+  out[1] = MIN(a[1], b[1]);
+  out[2] = MIN(a[2], b[2]);
+}
+
+static inline void VectorMaxs(vec3_t a, vec3_t b, vec3_t out)
+{
+  out[0] = MAX(a[0], b[0]);
+  out[1] = MAX(a[1], b[1]);
+  out[2] = MAX(a[2], b[2]);
+}
+
+static inline void Vector4(vec4_t v, float x, float y, float z, float w)
+{
+  v[0] = x;
+  v[1] = y;
+  v[2] = z;
+  v[3] = w;
+}
 
 // Matrices
 
@@ -317,14 +351,11 @@ static inline void Mat4Perspective(
       (znear - zfar);
 }
 
+bool Mat4Inverse(const mat4 m, mat4 out);
+void Mat4Mulv(mat4 m, vec4_t v, vec4_t out);
+
 // Planes and rays
 
-typedef struct ray_t
-{
-  vec3_t origin;
-  vec3_t dir;
-
-} ray_t;
 
 typedef struct plane_t
 {
@@ -356,7 +387,18 @@ static inline void PlaneNormalise(plane_t* plane)
   plane->normal[2] = -plane->normal[2];
 }
 
+static inline int PlaneLineIntersection(vec3_t origin, vec3_t dir, plane_t plane, vec3_t out, float* t_out)
+{
+  float denom = DotProduct(plane.normal, dir);
+  if (fabsf(denom) <= EPSILON)
+    return 0;
 
+  float t = (plane.d - DotProduct(plane.normal, origin)) / denom;
+  
+  VectorMA(origin, t, dir, out);
+  if (t_out) *t_out = t;
+  return 1;
+}
 
 
 #include <stdio.h>

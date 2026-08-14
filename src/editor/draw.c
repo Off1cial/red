@@ -1,145 +1,235 @@
 #include "editor/brush.h"
-
-#include "engine/shader.h"
+#include "editor/brushmesh.h"
 #include "editor/editor.h"
+#include "engine/mesh.h"
 #include "platform/window.h"
 
+#include "engine/hash.h"
 
-rsurfbatch_t gSurfbatches[ASSETS_MAX_TEXTURES];
-
-void rsurfbatch_addface(face_t f)
+static int facecmp(const void* x, const void* y)
 {
-  u32 texhandle = f.material.texhandle;
-  rsurfbatch_t* batch = &gSurfbatches[texhandle];
-  int i;
-  if (!batch->mesh)
-    batch->mesh = CBaseMesh_Create(f.winding->numpoints, 8);
+  face_t** a = (face_t**)(x);
+  face_t** b = (face_t**)(y);
 
-  winding_t* win = f.winding;
-  u32 inds[win->numpoints];
-  for (i = 0; i < win->numpoints; i++)
-  {
-    gpuVertex v;
-    VectorCopy(win->points[i], v.xyz);
-    VectorCopy(f.plane.normal, v.normal);
-    Vector(v.col, 1, 1 ,1);
-    FaceUVpoint(&f, win->points[i], v.uv);
-    inds[i] = CBaseMesh_PushVertex(batch->mesh, v);
-  }
-  for (i = 1; i < win->numpoints - 1; i++)
-  {
-    CBaseMesh_PushTriangleIndices(batch->mesh, inds[0], inds[i], inds[(i+1) % win->numpoints]);
-  }
-  CBaseMesh_Upload(batch->mesh, GL_STATIC_DRAW);
+  if ((*a)->material.texhandle < (*b)->material.texhandle)
+    return -1;
+  if ((*a)->material.texhandle > (*b)->material.texhandle)
+    return 1;
+  return 0;
 }
 
-void rsurfbatch_reset(u32 texhandle)
+static inline void sort_brush_faces(brush_t* b)
 {
-  rsurfbatch_t* batch = &gSurfbatches[texhandle];
-  if (!batch->mesh) return;
-  CBaseMesh_Reset(batch->mesh);
-}
-
-void R_DrawSurfbatch(rsurfbatch_t* batch)
-{
-  if (!batch->mesh) return;
-  CBaseMesh_Draw(batch->mesh, GL_TRIANGLES); 
+  qsort(b->faces, b->numfaces, sizeof(face_t*), facecmp);
+  printf("Faces sorted\n");
 }
 
 
-// Add a winding to a mesh
-static void PushBrushFace(CBaseMesh* mesh, face_t* face)
+
+static void plane_uvaxis(plane_t p, vec3_t u, vec3_t v)
 {
-  int v, i;
-  int numpoints = face->winding->numpoints;
-  uint32_t indices[numpoints];
+vec3_t up;
+  if (fabsf(p.normal[1]) < 0.9f)
+    Vector(up, 0, 1, 0);
+  else
+    Vector(up, 1, 0, 0);
 
-  for (v = 0; v < numpoints; v++)
-  {
-    gpuVertex vert = {0};
-    VectorCopy(face->plane.normal, vert.normal);
-    Vector(vert.col, 1, 1, 1);
-    // Temporary UVs
-    vert.uv[0] = 0; vert.uv[1] = 0;
+  VectorCrossNorm(up, p.normal, u);
+  VectorCrossNorm(p.normal, u, v);
 
-    VectorCopy(face->winding->points[v], vert.xyz);
-
-    indices[v] = CBaseMesh_PushVertex(mesh, vert);
-    printf("Pushed vertex\n");
-  }
-
-  for (i = 1; i < numpoints - 1; i++)
-    CBaseMesh_PushTriangleIndices(
-        mesh,
-        indices[0], indices[i], indices[(i + 1) % numpoints]);
 }
 
-uint8_t Brush_UpdateRenderable(brush_t* b)
+static void face_uvs(face_t* f, vec3_t p, vec2_t out)
 {
-  uint8_t reuse = 0;
-  if (!b->renderable)
-  {
-    b->renderable = calloc(1, sizeof(brushrender_t));
-    if (!b->renderable) return 0;
-    printf("Renderable created\n");
-  }
-  if (!b->renderable->mesh)
-  {
-    b->renderable->mesh = CBaseMesh_Create(6, 6);
-    if (!b->renderable->mesh) return 0;
-  }
-  printf("HERE1\n");
+  float sx = f->material.scale[0];
+  float sy = f->material.scale[1];
 
-  CBaseMesh_Reset(b->renderable->mesh);
-  CBaseMesh* mesh = b->renderable->mesh;
-  printf("HERE2\n");
+  float u = DotProduct(p, f->material.uaxis) * sx;
+  float v = DotProduct(p, f->material.vaxis) * sy;
+
+  out[0] = u + f->material.shift[0];
+  out[1] = v + f->material.shift[1];
+  clampf(&f->material.scale[0], 0.1f, 0.5f);
+  clampf(&f->material.scale[1], 0.1f, 0.5f);
+}
 
 
 
-  if (!mesh) return 0;
-  int f;
-  for (f = 0 ; f < b->facecount; f++)
-    PushBrushFace(mesh, &b->faces[f]);
+
+static void update_mesh(brush_t* b)
+{
+  sort_brush_faces(b);
+  int i, j;
+  brushmesh_t* mesh = &b->mesh;
+  mesh->surfacecount = 0;
   
-  CBaseMesh_Upload(mesh, GL_STATIC_DRAW);
-  return 1; 
+  if (!mesh->surfaces || b->numfaces > mesh->surfacecapacity)
+  {
+    mesh->surfaces = realloc(mesh->surfaces, sizeof(brushsurface_t) * b->numfaces);
+    mesh->surfacecapacity = b->numfaces;
+  }
+  if (!mesh->mesh) // Init the mesh
+    mesh->mesh = CBaseMesh_Create(24, 24);
+  CBaseMesh_Reset(mesh->mesh);
+  
+  texbucketent_t* entries[BRUSHMESH_TEXHASH_BUCKETS] = {0};
+
+
+  for (i = 0; i < b->numfaces; i++)
+  {
+    face_t* face = b->faces[i];
+    u32 texhandle = face->material.texhandle;
+    u32 bucket = Hash_Bucket( Hash_Int(texhandle), BRUSHMESH_TEXHASH_BUCKETS );
+    brushsurface_t* surf = NULL;
+
+    // Find correct surface (avoid collisions)
+    for (texbucketent_t* e = entries[bucket]; e ; e = e->next)
+    {
+      if (e->texhandle == texhandle)
+      {
+        surf = &mesh->surfaces[e->surface_index];
+        break;
+      }
+    }
+
+    // No surface found -> new texture
+    if (!surf)
+    {
+      int newidx = mesh->surfacecount++;
+      surf = &mesh->surfaces[newidx];
+      surf->firstindex = mesh->mesh->indexcount;
+      surf->indexcount = 0;
+      surf->texhandle = texhandle;
+
+      texbucketent_t* entry = malloc(sizeof(texbucketent_t));
+      entry->texhandle = surf->texhandle;
+      entry->surface_index = newidx;
+      entry->next = entries[bucket];
+      entries[bucket] = entry;
+    }
+
+
+    if (face->changed)
+    {
+      plane_uvaxis(face->plane, face->material.uaxis, face->material.vaxis);
+      face->changed = 0;
+    }
+    winding_t* win = face->win;
+    u32 indices[win->pointcount];
+    for (j = 0; j < win->pointcount; j++)
+    {
+      gpuVertex vertex;
+      VectorCopy(win->points[j], vertex.xyz);
+      VectorCopy(face->plane.normal, vertex.normal);
+      Vector4(vertex.col, 1, 1, 1, 1);
+      face_uvs(face, win->points[j], vertex.uv);
+      indices[j] = CBaseMesh_PushVertex(mesh->mesh, vertex);
+    }
+
+    for (j = 1; j + 1 < win->pointcount; j++)
+    {
+      u32 i0 = indices[0];
+      u32 i1 = indices[j];
+      u32 i2 = indices[j + 1];
+      CBaseMesh_PushTriangleIndices(mesh->mesh, i0, i1, i2);
+      surf->indexcount+=3;
+    }
+  }
+
+  // Free the hash map
+  for (int bucketcount = 0; bucketcount < BRUSHMESH_TEXHASH_BUCKETS; bucketcount++)
+  {
+    texbucketent_t* e = entries[bucketcount];
+    while (e) {texbucketent_t* next = e->next; free(e); e = next;}
+  }
+
+
+  CBaseMesh_Upload(mesh->mesh, GL_STATIC_DRAW);
+  CBaseMesh_Print(mesh->mesh);
+  printf("[EDITOR][BRUSH]: Mesh uploaded\n");
 }
 
-
-
+void R_DrawFaceHighlight() {
+  if (!gFaceHighlight.mesh) return;
+  CBaseMesh_Draw(gFaceHighlight.mesh, GL_TRIANGLES);
+}
 
 void R_DrawBrush(brush_t* b)
 {
-  CBaseMesh* mesh = b->renderable->mesh;
-  CBaseMesh_Draw(mesh, GL_TRIANGLES);
+  if  (b->changed)
+  {
+    update_mesh(b);
+    b->changed = 0;
+  }
+
+
+  int i;
+  brushsurface_t* surface;
+  int texhandle = -1;
+  CBaseMesh* mesh = b->mesh.mesh;
+  if (!mesh)
+    return;
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindVertexArray(mesh->vao);
+  for (i = 0; i < b->mesh.surfacecount; i++)
+  {
+    surface = &b->mesh.surfaces[i];
+    if (surface->texhandle != texhandle)
+    {
+      GLuint texid = gAssetManager->textures.tex[surface->texhandle].texture.gltexnum;
+      //printf("TEX id = %du\n", texid);
+      glBindTexture(GL_TEXTURE_2D, texid);
+      CBaseShader_SetInt(gEditorShader_brush, SH_UNIFORM_USE_TEXTURE, 1);
+      CBaseShader_SetInt(gEditorShader_brush, SH_UNIFORM_TEXTURE, 0);
+      texhandle = surface->texhandle;
+    }
+
+    glDrawElements(
+        GL_TRIANGLES,
+        (GLsizei)surface->indexcount,
+        GL_UNSIGNED_INT,
+        (void*)(surface->firstindex * sizeof(u32))
+    );
+  }
+  glBindVertexArray(0); 
 }
 
-static inline void glViewportRect(rectdef rect)
+
+static inline void ViewportRect(rectdef rect)
 {
-  glViewport(rect[0],
+  glViewport(
+      rect[0],
       gPltWindow->winh - (rect[1] + rect[3]),
-      rect[2], rect[3]
+      rect[2],
+      rect[3]
       );
 }
 
-void R_DrawBrushes(brush_t* list)
+/*
+void R_DrawBrush(brush_t* b)
 {
-  glViewportRect(gPanels[PANEL_3D].rect);
-  brush_t* b = NULL;
-  for (b = list; b; b = b->next)
-    R_DrawBrush(b);
-
-  glViewport(0,0, gPltWindow->winw, gPltWindow->winh);
-}
-
-
-void R_DrawSurfaces()
-{
-  // optimise by using only known textures that are in use
-  glViewportRect(gPanels[PANEL_3D].rect);
-  for (int i = 0; i < ASSETS_MAX_TEXTURES; i++)
+  if (b->changed)
   {
-    R_DrawSurfbatch(&gSurfbatches[i]);
+    update_mesh(b);
+    b->changed = 0;
   }
-  glViewport(0,0, gPltWindow->winw, gPltWindow->winh);
+
+  CBaseMesh_Draw(b->mesh.mesh, GL_TRIANGLES);
+}
+*/
+
+
+void R_DrawBrushes()
+{
+  ViewportRect(gPanels[PANEL_3D].rect);
+  brush_t* b = NULL;
+  CBaseShader_SetInt(gEditorShader_brush, SH_UNIFORM_USE_TEXTURE, 1);
+  for (b = gBrushes; b; b = b->next)
+  {
+    R_DrawBrush(b);
+  }
+  if (gHoveredBrush)
+    R_DrawFaceHighlight();
+  glViewport(0, 0, gPltWindow->winw, gPltWindow->winh);
 }
