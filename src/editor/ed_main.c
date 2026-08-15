@@ -37,7 +37,8 @@ int main()
       VEC_ZERO, 
       VEC_AXIS_Z, 
       (cViewport){0,0,gPltWindow->winw, gPltWindow->winh});
-
+  
+  camera->far = 100.0f;
   gCamera = camera;
   
 
@@ -69,6 +70,7 @@ int quit = 0;
 
 
     PlatformInput_Poll(gPltWindow->window, gPltInput, &quit);
+    Camera_FarzInput();
     Camcmd_prepare();
 
     if (accumulator >= cl_updaterate)
@@ -99,13 +101,10 @@ int quit = 0;
     Camera_Look(camera, gPltInput->mxrel, gPltInput->myrel, 0.4f);
     Camera_Update(camera);
     UI_FrameBegin();
-
     GUI_Draw();
   
     //UI_AddText("Balls", 0, 0, 0, sampletxtcol); 
     
-    
-    UI_FrameEnd();
 
     CBaseShader_Use(gEditorShader_brush);
     CBaseShader_SetMat4(gEditorShader_brush, SH_UNIFORM_VIEW, camera->view);
@@ -116,8 +115,12 @@ int quit = 0;
     }
 
 
+
+    UI_FrameEnd();
     while (glGetError() != GL_NO_ERROR)
       printf("GL error\n");
+
+
 
     SDL_GL_SwapWindow(gPltWindow->window);
 

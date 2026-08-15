@@ -287,7 +287,7 @@ uint8_t AssetManager_Init()
 
   TTF_Init();
 
-  printf("DEV HANDLE = %d\n", AssetManager_AddTexture("Textures/dev.png"));
+  printf("DEV HANDLE = %d\n", AssetManager_AddTexture("Textures/hl_tiles0.png"));
   AssetManager_AddFont("Fonts/Roboto.ttf", 20);
 
   ModelFile_Write("Models/obj/cube.obj", "Textures/dev.png", "Models/mdl/cube.mdl");

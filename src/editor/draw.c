@@ -158,6 +158,7 @@ void R_DrawBrush(brush_t* b)
 {
   if  (b->changed)
   {
+    Brush_BuildAllFaces(b);
     update_mesh(b);
     b->changed = 0;
   }

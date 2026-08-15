@@ -61,6 +61,9 @@ extern brushdraw_t gBrushDraw;
 
 extern facehighlight_t gFaceHighlight;
 
+extern face_t* gFaceTarget;
+extern brush_t* gBrushTarget;
+
 typedef enum {ECMD_BRUSHCREATE, ECMD_BRUSHDELETE} ecmdtype_t;
 
 typedef struct ecmd_t
@@ -88,7 +91,7 @@ brush_t* Brush_Create(vec3_t mins, vec3_t maxs);
 void Brush_Delete(brush_t** b);
 void Brush_DeleteAll();
 void Brush_SetFaceScale(brush_t* b, int face, float sx, float sy);
-
+void Brush_BuildAllFaces(brush_t* b);
 
 // Output brushes are allocated by this function, do not pre-allocate
 void Brush_Splice(brush_t* in, const plane_t split, brush_t** front, brush_t** back);
@@ -132,7 +135,14 @@ enum
   GRID_HUGE,
 };
 
+typedef enum
+{
+  CONTEXT_FACE = 1,
+  CONTEXT_ENTITY = 2,
+} panelcontext_t;
 
+
+extern panelcontext_t gPanelContext;
 
 // world -> screen, using the panel's 2D projection axes
 static void Panel_WorldToScreen(panel_t* p, vec3_t world, vec2_t out)
@@ -181,7 +191,6 @@ static float CurrentGridSize(float zoom)
 
 
 
+void Camera_FarzInput();
 
-
-
-
+void GUI_FaceContextMenu(face_t* f);

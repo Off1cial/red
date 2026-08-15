@@ -200,12 +200,13 @@ static void Brush_BuildFace(brush_t* b, const int face)
     if (cur->pointcount == 0)   // fully clipped away, nothing left to clip further
       break;
   }
-
+  
+  free(subject->win); subject->win = NULL;
   subject->win = cur;
   printf("Final = %d\n", cur->pointcount);
 }
 
-static void Brush_BuildAllFaces(brush_t* b)
+void Brush_BuildAllFaces(brush_t* b)
 {
   int f;
   for (f = 0; f < b->numfaces; f++)

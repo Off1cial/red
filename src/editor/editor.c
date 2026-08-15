@@ -13,8 +13,11 @@ brush_t* gHoveredBrush = NULL;
 int gHoveredBrushFace = -1;
 int gHoveredBrushFacePrevious = -2;
 
-facehighlight_t gFaceHighlight;
+panelcontext_t gPanelContext = 0;
 
+facehighlight_t gFaceHighlight;
+face_t* gFaceTarget = NULL;
+brush_t* gBrushTarget = NULL;
 
 float gGridSizes[] =
 {
@@ -340,14 +343,32 @@ static void ortho_input(panel_t* p)
 
 // 3D panel
 static void view_input() {
-  if (!brush_ray())
-    return;
+  bool hit = brush_ray();
 
-  if (gHoveredBrushFace != gHoveredBrushFacePrevious)
+  if (hit)
   {
-    gHoveredBrushFacePrevious = gHoveredBrushFace;
-    update_facehighlight();
+    if (gHoveredBrushFace != gHoveredBrushFacePrevious)
+    {
+      gHoveredBrushFacePrevious = gHoveredBrushFace;
+      update_facehighlight();
+   }
   }
+
+  if (pltInput_MouseClick(1))
+  {
+    if (gHoveredBrush)
+    {
+      gBrushTarget = gHoveredBrush;
+      gFaceTarget = gHoveredBrush->faces[gHoveredBrushFace];
+      gPanelContext |= CONTEXT_FACE;
+    }
+    else{
+      gBrushTarget = NULL;
+      gFaceTarget = NULL;
+      gPanelContext &= ~CONTEXT_FACE; 
+    }
+  }
+  
 }
 
 void PanelInput()
@@ -374,4 +395,20 @@ void PanelInput()
     view_input();
   }
 
+
+}
+
+
+void Camera_FarzInput()
+{
+  if (pltInput_KeyboardPress(SDL_SCANCODE_1))
+    gCamera->far = 50.0f;
+  if (pltInput_KeyboardPress(SDL_SCANCODE_2))
+    gCamera->far = 100.0f;
+  if (pltInput_KeyboardPress(SDL_SCANCODE_3))
+    gCamera->far = 200.0f;
+  if (pltInput_KeyboardPress(SDL_SCANCODE_4))
+    gCamera->far = 500.0f;
+  if (pltInput_KeyboardPress(SDL_SCANCODE_5))
+    gCamera->far = 1000.0f;
 }

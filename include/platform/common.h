@@ -8,6 +8,11 @@
 
 // Common stuff innit
 
+#define SET_FLAG_MASK(mask, flag)   ((mask) |= (flag))
+#define CLR_FLAG_MASK(mask, flag)   ((mask) &= ~(flag))
+#define HAS_FLAG_MASK(mask, flag)   ((mask) & (flag))
+#define TOG_FLAG_MASK(mask, flag)   ((mask) ^= (flag))
+
 // 8 Bit colours
 
 #define Q_COLOR_ESCAPE	'^'

@@ -38,6 +38,8 @@ u64 PanelFlags =
   UIWindowFlag_NoResize |
   UIWindowFlag_NoTitleBar;
 
+u64 EditMenuFlags = 0;
+
 #define EDITORGUI_CONTEXTSWIDTH 0.25  // The context panel occupies 1/4 of the screen's width
 #define EDITORGUI_TOOLSWIDTH (EDITORGUI_CONTEXTSWIDTH / 2)
 
@@ -207,6 +209,14 @@ static void DrawPanel_Context()
   UI_End();
 }
 
+static void DrawPanel_Tools()
+{
+  if (UI_Begin("Tools", gPanels[PANEL_TOOLS].rect, PanelFlags))
+  {
+  }
+  UI_End();
+}
+
 // Iterate brushes, draw for each panel, or iterate panels and draw each brush
 /*
 static void DrawPanelBrushes()
@@ -358,8 +368,33 @@ void GUI_Draw()
   //gHoveredPanel = -1;
   glViewport(0, 0, gPltWindow->winw, gPltWindow->winh);
   DrawPanel_Context();
+  DrawPanel_Tools();
   for (int i = 0; i < PANEL_3D; i++)
   {
     DrawPanel(&gPanels[i]);
   }
+  if ((gPanelContext & CONTEXT_FACE) != 0)
+    GUI_FaceContextMenu(gFaceTarget);
+}
+
+
+void GUI_FaceContextMenu(face_t* f)
+{
+  rectdef rect = {
+    gPltInput->mx, 
+    gPltInput->my,
+    gPltWindow->winw / 4,
+    gPltWindow->winh / 4,
+  };
+
+  if (UI_Begin("Edit face", rect, EditMenuFlags))
+  {
+    if (UI_Button("a", rect_null))
+    {
+      gFaceTarget->plane.d += 0.5f;
+      gBrushTarget->changed = 1;
+    }
+  }
+  UI_End();
+
 }

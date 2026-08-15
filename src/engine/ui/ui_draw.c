@@ -610,6 +610,7 @@ void UI_DrawBatch()
   glDisable(GL_DEPTH_TEST);   // UI is 2D — ordering, not depth, decides visibility
   glDepthMask(GL_FALSE);      // don't let UI write into the depth buffer either
 
+  glDisable(GL_CULL_FACE);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // needed if you ever use alpha < 255
 
@@ -692,4 +693,5 @@ void UI_DrawBatch()
 
   glDepthMask(GL_TRUE);       // restore state for whatever draws next (next frame's 3D pass)
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
 }

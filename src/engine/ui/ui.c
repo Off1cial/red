@@ -2,11 +2,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <float.h>
 
 #include <glad/glad.h>
 #include "engine/shader.h"
 
 uicontext_t* gUIctx = NULL;
+rectdef rect_null;
 
 
 uint8_t UI_Init()
@@ -44,7 +46,8 @@ uint8_t UI_Init()
   RGBASet(style->window_bg_idle,    10, 10,  10, 100);
   RGBASet(style->window_bg_title,   40, 40, 140, 255);
 
-
+  
+  UIRECT_NULL(rect_null);
   // OpenGL
 
   glGenVertexArrays(1, &gUIctx->vao);

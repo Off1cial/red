@@ -142,7 +142,7 @@ typedef struct uicontext_t
 } uicontext_t;
 
 extern uicontext_t* gUIctx;
-
+extern rectdef rect_null;
 uint8_t UI_Init();
 
 // ui_draw.c
